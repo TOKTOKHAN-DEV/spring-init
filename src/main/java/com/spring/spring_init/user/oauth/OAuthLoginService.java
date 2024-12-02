@@ -1,10 +1,6 @@
 package com.spring.spring_init.user.oauth;
 
 import com.spring.spring_init.common.security.jwt.TokenProvider;
-import com.spring.spring_init.common.security.jwt.TokenResponseDto;
-import com.spring.spring_init.user.entity.User;
-import com.spring.spring_init.user.oauth.common.OAuthInfoResponse;
-import com.spring.spring_init.user.oauth.common.OAuthLoginRequest;
 import com.spring.spring_init.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,23 +13,23 @@ public class OAuthLoginService {
     private final TokenProvider tokenProvider;
     private final RequestOAuthInfoService requestOAuthInfoService;
 
-    public TokenResponseDto login(OAuthLoginRequest params) {
-        OAuthInfoResponse oAuthInfoResponse = requestOAuthInfoService.request(params);
-        User user = findOrCreateMember(oAuthInfoResponse);
-        return tokenProvider.getTokenByOauth(user);
-    }
+//    public TokenResponseDto login(OAuthLoginRequest params) {
+//        OAuthInfoResponse oAuthInfoResponse = requestOAuthInfoService.request(params);
+//        User user = findOrCreateMember(oAuthInfoResponse);
+//        return tokenProvider.getTokenByOauth(user);
+//    }
 
-    private User findOrCreateMember(OAuthInfoResponse oAuthInfoResponse) {
-        return userRepository.findByEmail(oAuthInfoResponse.getEmail())
-            .orElseGet(() -> newMember(oAuthInfoResponse));
-    }
+//    private User findOrCreateMember(OAuthInfoResponse oAuthInfoResponse) {
+//        return userRepository.findByEmail(oAuthInfoResponse.getEmail())
+//            .orElseGet(() -> newMember(oAuthInfoResponse));
+//    }
 
-    private User newMember(OAuthInfoResponse oAuthInfoResponse) {
-        User user = new User(
-            oAuthInfoResponse.getNickname(),
-            oAuthInfoResponse.getEmail(),
-            oAuthInfoResponse.getOAuthProvider()
-        );
-        return userRepository.save(user);
-    }
+//    private User newMember(OAuthInfoResponse oAuthInfoResponse) {
+//        User user = new User(
+//            oAuthInfoResponse.getNickname(),
+//            oAuthInfoResponse.getEmail(),
+//            oAuthInfoResponse.getOAuthProvider()
+//        );
+//        return userRepository.save(user);
+//    }
 }

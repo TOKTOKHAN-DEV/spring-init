@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginRequestDto {
 
-    @Schema(name = "username", description = "아이디")
-    @NotNull(message = "username 필수 값 입니다.")
-    private String username;
+    @Schema(name = "email", description = "아이디")
+    @NotNull(message = "email 필수 값 입니다.")
+    private String email;
 
 
     @Schema(name = "password", description = "비밀번호")

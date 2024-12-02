@@ -65,6 +65,12 @@ public class TokenProvider implements InitializingBean {
         );
     }
 
+    public String getAccessTokenByUser(
+        final UserDetailsImpl userDetails
+    ) {
+        return createToken(userDetails, TokenType.ACCESS);
+    }
+
     private String createToken(
         final User user,
         final TokenType tokenType
@@ -73,7 +79,7 @@ public class TokenProvider implements InitializingBean {
 
         return BEARER_PREFIX +
             Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(user.getEmail())
                 .claim(USER_ID, user.getUserId())
 //                .claim(AUTHORITIES_KEY,
 //                    userDetails.getSetAuthorities().stream()
@@ -99,7 +105,7 @@ public class TokenProvider implements InitializingBean {
 
         return BEARER_PREFIX +
             Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .setSubject(userDetails.getEmail())
                 .claim(USER_ID, userDetails.getUserId())
                 .claim(AUTHORITIES_KEY,
                     userDetails.getSetAuthorities().stream()

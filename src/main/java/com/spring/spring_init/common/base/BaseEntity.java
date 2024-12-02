@@ -17,12 +17,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public abstract class BaseEntity {
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "timestamptz")
+    @Column(name = "created_at", nullable = false, columnDefinition = "timestamptz")
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "modified_at", nullable = false, columnDefinition = "timestamptz")
-    private LocalDateTime modifiedAt;
+    @Column(name = "updated_at", nullable = false, columnDefinition = "timestamptz")
+    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
     private LocalDateTime deletedAt;

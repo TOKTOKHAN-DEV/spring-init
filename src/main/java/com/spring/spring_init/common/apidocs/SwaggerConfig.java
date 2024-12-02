@@ -12,7 +12,10 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.OAuthFlow;
 import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.Arrays;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +32,11 @@ public class SwaggerConfig {
             .type(SecurityScheme.Type.OAUTH2)
             .flows(new OAuthFlows()
                 .password(new OAuthFlow()
-                    .tokenUrl("/api/v1/na/member/swagger-login")  //스웨거 로그인 api
+                    .tokenUrl("/v1/user/swagger-login")  //스웨거 로그인 api
                 )
             );
+
+        SecurityRequirement oauthRequirement = new SecurityRequirement().addList("System Login");
 
         /**
          * 프로젝트에 따라 별도 설정
@@ -46,9 +51,11 @@ public class SwaggerConfig {
                 """); //도메인 명 바꾸기
 
         return new OpenAPI()
+            .addServersItem(new Server().url("/"))
             .components(new Components()
                 .addSecuritySchemes("System Login", oauthScheme)
             )
+            .security(Arrays.asList(oauthRequirement))
             .info(info);
     }
 

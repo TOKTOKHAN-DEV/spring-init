@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
@@ -27,7 +28,6 @@ public class SecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -57,15 +57,25 @@ public class SecurityConfig {
         );
 
         //권한 규칙 구성 시작
-        httpSecurity.authorizeHttpRequests(
-            authorize -> authorize
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-resources/**").permitAll()
-                .requestMatchers("/v1/user/na/**").permitAll()
-                .requestMatchers("/v1/admin/**").hasAnyAuthority("ADMIN")
-                .anyRequest().authenticated()
-        );
+        httpSecurity
+            .authorizeHttpRequests(
+                authorize -> authorize
+                    .requestMatchers("/swagger/**").permitAll()
+                    .requestMatchers("/swagger-ui/**").permitAll()
+                    .requestMatchers("/v3/api-docs/**").permitAll()
+                    .requestMatchers("/swagger-resources/**").permitAll()
+                    .requestMatchers("/v1/user/register").permitAll()
+                    .requestMatchers("/v1/user/login").permitAll()
+                    .requestMatchers("/v1/user/swagger-login").permitAll()
+                    .requestMatchers("/v1/user/password-reset").permitAll()
+                    .requestMatchers("/v1/verifier/**").permitAll()
+                    .requestMatchers("/v1/admin/**").hasAnyAuthority("ADMIN")
+                    .requestMatchers("/test/**").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .exceptionHandling((exceptionHandling) -> exceptionHandling
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)      // 인증오류 (401 오류)
+                .accessDeniedHandler(jwtAccessDeniedHandler));
 
         httpSecurity.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

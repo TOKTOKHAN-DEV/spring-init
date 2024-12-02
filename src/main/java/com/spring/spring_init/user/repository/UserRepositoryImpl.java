@@ -1,6 +1,9 @@
 package com.spring.spring_init.user.repository;
 
+import com.spring.spring_init.common.persistence.config.JpaConfig;
 import com.spring.spring_init.user.entity.User;
+import com.spring.spring_init.verify.repository.EmailVerifyJpaRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -10,11 +13,8 @@ import org.springframework.stereotype.Repository;
 public class UserRepositoryImpl implements UserRepository {
 
     private final UserJpaRepository userJpaRepository;
-
-    @Override
-    public Optional<User> findByUsername(final String username) {
-        return userJpaRepository.findByUsername(username);
-    }
+    private final EmailVerifyJpaRepository emailVerifyJpaRepository;
+    private final JpaConfig jpaConfig;
 
     @Override
     public User save(final User user) {
@@ -24,5 +24,15 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<User> findByEmail(final String email) {
         return userJpaRepository.findByEmail(email);
+    }
+
+    @Override
+    public List<User> findAll() {
+        return userJpaRepository.findAll();
+    }
+
+    @Override
+    public Optional<User> findById(Long userId) {
+        return userJpaRepository.findById(userId);
     }
 }

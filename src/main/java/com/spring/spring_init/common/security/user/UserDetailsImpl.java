@@ -15,24 +15,28 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class UserDetailsImpl implements UserDetails {
 
     private Long userId;
-    private String username;
+    private String email;
     private String password;
     private Set<Authority> authorities;
 
     public UserDetailsImpl(
         final Long userId,
-        final String username,
+        final String email,
         final Set<Authority> authorities
     ) {
         this.userId = userId;
-        this.username = username;
+        this.email = email;
         this.authorities = authorities;
     }
 
-    public UserDetailsImpl(Long userId, String username, String password,
-        Set<Authority> authorities) {
+    public UserDetailsImpl(
+        Long userId,
+        String email,
+        String password,
+        Set<Authority> authorities
+    ) {
         this.userId = userId;
-        this.username = username;
+        this.email = email;
         this.password = password;
         this.authorities = authorities;
     }
@@ -55,6 +59,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 }

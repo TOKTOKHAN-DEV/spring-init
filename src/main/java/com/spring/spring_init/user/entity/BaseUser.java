@@ -2,8 +2,6 @@ package com.spring.spring_init.user.entity;
 
 import com.spring.spring_init.common.base.BaseEntity;
 import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,37 +24,34 @@ public class BaseUser extends BaseEntity {
     @Column(name = "user_id", unique = true, nullable = false)
     private Long userId;
 
-    @Column(unique = true, nullable = false)
-    private String username;
+    @Column(name = "pen_name", unique = true, nullable = false)
+    private String penName;
 
-    @Column
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column
+    @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(length = 11)
-    private String phone;
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @CreationTimestamp
     @Column(name = "date_joined", nullable = false, updatable = false, columnDefinition = "timestamptz")
     private LocalDateTime dateJoined;
 
-    @Column(name = "oauth_provider")
-    @Enumerated(EnumType.STRING)
-    private OAuthProvider oAuthProvider;
-
     public BaseUser(
-        final String username,
-        final String password
+        final String email,
+        final String password,
+        final String penName
     ) {
-        this.username = username;
+        this.email = email;
         this.password = password;
+        this.penName = penName;
     }
 
-    public BaseUser(String username, String email, OAuthProvider oAuthProvider) {
-        this.username = username;
-        this.email = email;
-        this.oAuthProvider = oAuthProvider;
+    // 비밀번호 변경
+    public void changePassword(String changePassword) {
+        this.password = changePassword;
     }
 }

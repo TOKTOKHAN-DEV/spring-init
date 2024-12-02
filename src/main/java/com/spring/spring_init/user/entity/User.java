@@ -1,10 +1,12 @@
 package com.spring.spring_init.user.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,15 +33,29 @@ public class User extends BaseUser {
             @JoinColumn(name = "authority_id", referencedColumnName = "authority_id")})
     private Set<Authority> authorities;
 
-    public User(String username, String password) {
-        super(username, password);
+    @Column(name = "is_staff")
+    private Boolean isStaff;
+
+    @Column(name = "is_superuser")
+    private Boolean isSuperuser;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "payment_date")
+    private LocalDate paymentDate;
+
+    public User(String email, String password, Set<UserRole> userRoles, String penName) {
+        super(email, password, penName);
     }
 
-    public User(
-        final String username,
-        final String email,
-        final OAuthProvider oAuthProvider
-    ) {
-        super(username, email, oAuthProvider);
+    // 회원 탈퇴
+    public void delete() {
+        this.isActive = false;
+    }
+
+    // 펜슬리 코드 등록
+    public void approvalCode() {
+        this.paymentDate = LocalDate.now();
     }
 }

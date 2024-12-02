@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum CommonExceptionCode implements BaseErrorCode {
-    FIELD_ERROR(org.springframework.http.HttpStatus.BAD_REQUEST, "FIELD_ERROR", "Field error");
+    FIELD_ERROR(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "Field error");
 
     private final HttpStatus httpStatusCode;
 
