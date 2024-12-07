@@ -251,6 +251,7 @@ Resources:
       LaunchType: FARGATE
       ServiceName: web
       TaskDefinition: !Ref TaskDefinitionWeb
+      HealthCheckGracePeriodSeconds: 120   #스프링부트가 실행되는 시간에 따라 설정. 로컬 부팅 시간의 2배 추천
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
