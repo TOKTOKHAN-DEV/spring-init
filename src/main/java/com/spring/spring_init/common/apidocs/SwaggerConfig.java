@@ -26,20 +26,27 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
+        // Bearer 설정
+        SecurityScheme bearerScheme = new SecurityScheme()
+            .type(SecurityScheme.Type.HTTP)
+            .scheme("Bearer")
+            .bearerFormat("JWT")
+            .in(SecurityScheme.In.HEADER)
+            .name("Authorization");
 
         // OAuth2 설정 (프로젝트 로그인 사용)
         SecurityScheme oauthScheme = new SecurityScheme()
             .type(SecurityScheme.Type.OAUTH2)
             .flows(new OAuthFlows()
                 .password(new OAuthFlow()
-                    .tokenUrl("/v1/user/swagger-login")  //스웨거 로그인 api
+                    .tokenUrl("/v1/user/swagger-login")  // TODO: 스웨거 로그인 API URL을 프로젝트에 맞게 수정
                 )
             );
 
         SecurityRequirement oauthRequirement = new SecurityRequirement().addList("System Login");
 
         /**
-         * 프로젝트에 따라 별도 설정
+         * TODO : 프로젝트에 따라 별도 설정
          */
         Info info = new Info()
             .version("1.0.0")
@@ -53,6 +60,7 @@ public class SwaggerConfig {
         return new OpenAPI()
             .addServersItem(new Server().url("/"))
             .components(new Components()
+                .addSecuritySchemes("bearer Auth", bearerScheme)
                 .addSecuritySchemes("System Login", oauthScheme)
             )
             .security(Arrays.asList(oauthRequirement))
