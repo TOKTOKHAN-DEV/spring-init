@@ -3,6 +3,7 @@ package com.spring.spring_init.common.security.config;
 import com.spring.spring_init.common.security.exception.JwtAccessDeniedHandler;
 import com.spring.spring_init.common.security.exception.JwtAuthenticationEntryPoint;
 import com.spring.spring_init.common.security.jwt.JwtTokenFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 
 @Configuration
@@ -28,6 +31,7 @@ public class SecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CorsProperties corsProperties;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -60,16 +64,24 @@ public class SecurityConfig {
         httpSecurity
             .authorizeHttpRequests(
                 authorize -> authorize
+                    //health check
+                    .requestMatchers("/health").permitAll()
+
+                    //swagger
                     .requestMatchers("/swagger/**").permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/v3/api-docs/**").permitAll()
                     .requestMatchers("/swagger-resources/**").permitAll()
+
                     .requestMatchers("/v1/user/register").permitAll()
                     .requestMatchers("/v1/user/login").permitAll()
                     .requestMatchers("/v1/user/swagger-login").permitAll()
                     .requestMatchers("/v1/user/password-reset").permitAll()
                     .requestMatchers("/v1/verifier/**").permitAll()
+
+                    //Admin 페이지
                     .requestMatchers("/v1/admin/**").hasAnyAuthority("ADMIN")
+
                     .requestMatchers("/test/**").permitAll()
                     .anyRequest().authenticated()
             )
@@ -80,5 +92,19 @@ public class SecurityConfig {
         httpSecurity.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
+    }
+
+
+    public CorsConfigurationSource corsConfigurationSource() {
+        return request -> {
+            CorsConfiguration config = new CorsConfiguration();
+            config.setAllowedOrigins(corsProperties.getAllowedOrigins()); // 허용 도메인 리스트 -> yml 파일에서 관리
+            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            config.addAllowedHeader("*");
+            config.setAllowCredentials(true);
+            config.addExposedHeader("Authorization");
+
+            return config;
+        };
     }
 }
