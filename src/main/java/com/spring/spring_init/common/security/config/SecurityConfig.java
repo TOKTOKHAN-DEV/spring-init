@@ -64,16 +64,24 @@ public class SecurityConfig {
         httpSecurity
             .authorizeHttpRequests(
                 authorize -> authorize
+                    //health check
+                    .requestMatchers("/health").permitAll()
+
+                    //swagger
                     .requestMatchers("/swagger/**").permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/v3/api-docs/**").permitAll()
                     .requestMatchers("/swagger-resources/**").permitAll()
+
                     .requestMatchers("/v1/user/register").permitAll()
                     .requestMatchers("/v1/user/login").permitAll()
                     .requestMatchers("/v1/user/swagger-login").permitAll()
                     .requestMatchers("/v1/user/password-reset").permitAll()
                     .requestMatchers("/v1/verifier/**").permitAll()
+
+                    //Admin 페이지
                     .requestMatchers("/v1/admin/**").hasAnyAuthority("ADMIN")
+
                     .requestMatchers("/test/**").permitAll()
                     .anyRequest().authenticated()
             )
