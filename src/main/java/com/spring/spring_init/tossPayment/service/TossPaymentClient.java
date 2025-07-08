@@ -15,10 +15,8 @@ import com.spring.spring_init.common.exception.CommonException;
 import com.spring.spring_init.tossPayment.config.TossPaymentProperties;
 import com.spring.spring_init.tossPayment.dto.request.CancelPaymentRequestDto;
 import com.spring.spring_init.tossPayment.dto.request.ConfirmPaymentRequestDto;
-import com.spring.spring_init.tossPayment.dto.response.CancelPaymentResponseDto;
-import com.spring.spring_init.tossPayment.dto.response.ConfirmPaymentResponseDto;
-import com.spring.spring_init.tossPayment.dto.response.PaymentCancelExceptionResponseDto;
-import com.spring.spring_init.tossPayment.dto.response.PaymentConfirmExceptionResponseDto;
+import com.spring.spring_init.tossPayment.dto.response.TossPaymentDto;
+import com.spring.spring_init.tossPayment.dto.response.PaymentExceptionResponseDto;
 import com.spring.spring_init.tossPayment.exception.TossPaymentCancelExceptionCode;
 import com.spring.spring_init.tossPayment.exception.TossPaymentConfirmExceptionCode;
 
@@ -52,9 +50,9 @@ public class TossPaymentClient {
 	/**
 	 * 결제 승인 요청을 보냅니다.
 	 * @param requestDto ConfirmPaymentRequestDto 결제 승인 요청 DTO
-	 * @return ConfirmPaymentResponseDto 결제 승인 응답 DTO
+	 * @return TossPaymentDto 결제 승인 응답 DTO
 	 */
-	public ConfirmPaymentResponseDto requestConfirm(ConfirmPaymentRequestDto requestDto) {
+	public TossPaymentDto requestConfirm(ConfirmPaymentRequestDto requestDto) {
 		log.info("Payment request: {}", requestDto.getPaymentKey());
 		
 		return restClient.method(HttpMethod.POST)
@@ -71,7 +69,7 @@ public class TossPaymentClient {
 					exceptionCode.getMessage()
 				);
 			})
-			.body(ConfirmPaymentResponseDto.class);
+			.body(TossPaymentDto.class);
 	}
 	
 	/**
@@ -80,7 +78,7 @@ public class TossPaymentClient {
 	 * @param requestDto CancelPaymentRequestDto 결제 취소 요청 DTO
 	 * @return CancelPaymentResponseDto 결제 취소 응답 DTO
 	 */
-	public CancelPaymentResponseDto requestCancel(
+	public TossPaymentDto requestCancel(
 		String paymentKey,
 		CancelPaymentRequestDto requestDto
 	) {
@@ -97,30 +95,30 @@ public class TossPaymentClient {
 					exceptionCode.getMessage()
 				);
 			})
-			.body(CancelPaymentResponseDto.class);
+			.body(TossPaymentDto.class);
 	}
 	
 	
 	// ---------------------------- //
 	
 	
-	// 결제 승인 예외 코드 추출
+	// 결제 승인 에러 코드 추출
 	private TossPaymentConfirmExceptionCode getPaymentConfirmExceptionCode(
 		final ClientHttpResponse response
 	) throws IOException {
-		PaymentConfirmExceptionResponseDto responseDto =
-			objectMapper.readValue(response.getBody(), PaymentConfirmExceptionResponseDto.class);
+		PaymentExceptionResponseDto responseDto =
+			objectMapper.readValue(response.getBody(), PaymentExceptionResponseDto.class);
 		
-		return TossPaymentConfirmExceptionCode.findByCode(responseDto.getCode());
+		return TossPaymentConfirmExceptionCode.findByCode(responseDto.getError().getCode());
 	}
 	
-	// 결제 취소 예외 코드 추출
+	// 결제 취소 에러 코드 추출
 	private TossPaymentCancelExceptionCode getPaymentCancelExceptionCode(
 		final ClientHttpResponse response
 	) throws IOException {
-		PaymentCancelExceptionResponseDto responseDto =
-			objectMapper.readValue(response.getBody(), PaymentCancelExceptionResponseDto.class);
+		PaymentExceptionResponseDto responseDto =
+			objectMapper.readValue(response.getBody(), PaymentExceptionResponseDto.class);
 		
-		return TossPaymentCancelExceptionCode.findByCode(responseDto.getCode());
+		return TossPaymentCancelExceptionCode.findByCode(responseDto.getError().getCode());
 	}
 }

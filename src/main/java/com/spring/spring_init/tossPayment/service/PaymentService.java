@@ -8,8 +8,8 @@ import com.spring.spring_init.common.security.user.UserDetailsImpl;
 import com.spring.spring_init.tossPayment.dto.request.CancelPaymentRequestDto;
 import com.spring.spring_init.tossPayment.dto.request.ConfirmPaymentRequestDto;
 import com.spring.spring_init.tossPayment.dto.request.SaveAmountRequestDto;
-import com.spring.spring_init.tossPayment.dto.request.VerifyAmountRequestDto;
 import com.spring.spring_init.tossPayment.dto.response.ConfirmPaymentResponseDto;
+import com.spring.spring_init.tossPayment.dto.response.TossPaymentDto;
 import com.spring.spring_init.tossPayment.entity.TossPayment;
 import com.spring.spring_init.tossPayment.entity.TossPaymentCancel;
 import com.spring.spring_init.tossPayment.entity.TossPaymentMethod;
@@ -55,16 +55,17 @@ public class PaymentService {
 		
 		// 결제 승인 요청
 		User user = getUser(userDetails);
-		ConfirmPaymentResponseDto responseDto = tossPaymentClient.requestConfirm(requestDto);
+		TossPaymentDto confirmDto =
+			tossPaymentClient.requestConfirm(requestDto);
 		
-		saveConfirmPayment(responseDto, user);
-		saveVirtualAccount(responseDto, user);
-		updatePaymentDate(responseDto, user);
+		saveConfirmPayment(confirmDto, user);
+		saveVirtualAccount(confirmDto, user);
+		updatePaymentDate(confirmDto, user);
 		
 		log.info("Payment request success: {}", requestDto.getPaymentKey());
 		
-		//TODO : 프론트와 확인해서, 프론트에 필요한 정보만 보내줄 수 있도록 수정 필요
-		return responseDto;
+		//TODO : 프론트와 확인해서, 프론트에 필요한 정보 보내줄 수 있도록 수정 필요
+		return new ConfirmPaymentResponseDto(confirmDto);
 	}
 	
 	// 사용자 정보 조회
@@ -78,20 +79,20 @@ public class PaymentService {
 	
 	// 결제 정보 저장
 	private void saveConfirmPayment(
-		ConfirmPaymentResponseDto confirmPaymentResponseDto,
+		TossPaymentDto tossPaymentDto,
 		User user
 	) {
 		try {
 			// 결제 정보 저장
-			tosspaymentRepository.save(new TossPayment(confirmPaymentResponseDto, user));
+			tosspaymentRepository.save(new TossPayment(tossPaymentDto, user));
 		} catch (Exception e) {
 			// 결제 정보 저장 실패 시, 토스 결제 취소 요청
 			CancelPaymentRequestDto cancelPaymentRequestDto = new CancelPaymentRequestDto(
 				TossPaymentCancel.DATABASE_ERROR.getMessage(),
-				confirmPaymentResponseDto.getTotalAmount()
+				tossPaymentDto.getTotalAmount()
 			);
 			
-			tossPaymentClient.requestCancel(confirmPaymentResponseDto.getPaymentKey(), cancelPaymentRequestDto);
+			tossPaymentClient.requestCancel(tossPaymentDto.getPaymentKey(), cancelPaymentRequestDto);
 			
 			throw new CommonException(
 				PaymentExceptionCode.CONFIRM_SERVER_FAILED.getCode(),
@@ -101,14 +102,14 @@ public class PaymentService {
 	}
 	
 	// 가상 계좌 정보 저장
-	private void saveVirtualAccount(ConfirmPaymentResponseDto responseDto, User user) {
+	private void saveVirtualAccount(TossPaymentDto responseDto, User user) {
 		if (responseDto.getMethod().equals(TossPaymentMethod.VIRTUAL_ACCOUNT.name())) {
 			tossVirtualAccountRepository.save(new TossVirtualAccount(responseDto.getVirtualAccount(), user));
 		}
 	}
 	
 	// 결제 일자 업데이트
-	private static void updatePaymentDate(ConfirmPaymentResponseDto responseDto, User user) {
+	private static void updatePaymentDate(TossPaymentDto responseDto, User user) {
 		if (responseDto.getStatus().equals(TossPaymentStatus.DONE.name())) {
 			// 결제 완료 시, 사용자 결제 일자 업데이트
 			// TODO : 프로젝트에 따라 구현

@@ -12,6 +12,7 @@ public enum TossPaymentStatus {
 	PARTIAL_CANCELED("PARTIAL_CANCELED", "부분 취소"),
 	ABORTED("ABORTED", "결제 승인 실패"),
 	EXPIRED("EXPIRED", "거래 취소")
+	
 	;
 	
 	private final String code;

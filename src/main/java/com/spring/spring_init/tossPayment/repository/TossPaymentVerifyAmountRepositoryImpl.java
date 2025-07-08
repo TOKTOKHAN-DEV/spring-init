@@ -29,14 +29,4 @@ public class TossPaymentVerifyAmountRepositoryImpl implements TossPaymentVerifyA
 	public void delete(TossPaymentVerifyAmount amount) {
 		tossPaymentVerifyAmountJpaRepository.delete(amount);
 	}
-	
-	@Override
-	public List<TossPaymentVerifyAmount> findByCreatedAtBefore(LocalDateTime createdAtBefore) {
-		return tossPaymentVerifyAmountJpaRepository.findByCreatedAtBefore(createdAtBefore);
-	}
-	
-	@Override
-	public void deleteAll(List<TossPaymentVerifyAmount> verifyAmounts) {
-		tossPaymentVerifyAmountJpaRepository.deleteAll(verifyAmounts);
-	}
 }

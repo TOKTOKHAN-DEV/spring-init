@@ -2,7 +2,7 @@ package com.spring.spring_init.tossPayment.entity;
 
 import java.time.ZonedDateTime;
 
-import com.spring.spring_init.tossPayment.dto.response.ConfirmPaymentResponseDto;
+import com.spring.spring_init.tossPayment.dto.response.TossPaymentDto;
 import com.spring.spring_init.user.entity.User;
 
 import jakarta.persistence.Column;
@@ -80,7 +80,7 @@ public class TossPayment {
 	@Column(name = "secret")
 	private String secret;
 	
-	public TossPayment(ConfirmPaymentResponseDto responseDto, User user) {
+	public TossPayment(TossPaymentDto responseDto, User user) {
 		this.user = user.getUserId();
 		this.tossPaymentKey = responseDto.getPaymentKey();
 		this.tossOrderId = responseDto.getOrderId();
@@ -94,9 +94,5 @@ public class TossPayment {
 		this.requestedAt = responseDto.getRequestedAt();
 		this.approvedAt = responseDto.getApprovedAt();
 		this.secret = responseDto.getSecret();
-	}
-	
-	public void updateStatus(TossPaymentStatus status) {
-		this.paymentStatus = status;
 	}
 }

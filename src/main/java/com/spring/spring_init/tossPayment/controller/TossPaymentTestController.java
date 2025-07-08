@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.spring.spring_init.common.dto.ResponseDTO;
 import com.spring.spring_init.tossPayment.dto.request.CancelPaymentRequestDto;
-import com.spring.spring_init.tossPayment.dto.response.CancelPaymentResponseDto;
+import com.spring.spring_init.tossPayment.dto.response.TossPaymentDto;
 import com.spring.spring_init.tossPayment.service.TossPaymentClient;
 
 import lombok.RequiredArgsConstructor;
@@ -50,12 +50,12 @@ public class TossPaymentTestController {
 	
 	// 결제 취소 테스트
 	@PostMapping("/cancel")
-	public ResponseEntity<ResponseDTO<CancelPaymentResponseDto>> cancelPayment(
+	public ResponseEntity<ResponseDTO<TossPaymentDto>> cancelPayment(
 		@RequestParam String paymentKey,
 		@Validated @RequestBody CancelPaymentRequestDto requestDto
 	) {
 		return ResponseEntity.ok(
-			ResponseDTO.<CancelPaymentResponseDto>builder()
+			ResponseDTO.<TossPaymentDto>builder()
 				.statusCode(HttpStatus.OK.value())
 				.message("SUCCESS")
 				.data(tossPaymentClient.requestCancel(paymentKey, requestDto))
