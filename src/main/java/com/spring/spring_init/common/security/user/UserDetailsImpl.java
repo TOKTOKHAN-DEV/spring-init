@@ -1,9 +1,8 @@
 package com.spring.spring_init.common.security.user;
 
-import com.spring.spring_init.user.entity.Authority;
+import com.spring.spring_init.user.entity.UserRole;
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Collections;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,39 +16,33 @@ public class UserDetailsImpl implements UserDetails {
     private Long userId;
     private String email;
     private String password;
-    private Set<Authority> authorities;
+    private UserRole userRole;
 
     public UserDetailsImpl(
         final Long userId,
         final String email,
-        final Set<Authority> authorities
+        final UserRole userRole
     ) {
         this.userId = userId;
         this.email = email;
-        this.authorities = authorities;
+        this.userRole = userRole;
     }
 
     public UserDetailsImpl(
-        Long userId,
-        String email,
-        String password,
-        Set<Authority> authorities
+        final Long userId,
+        final String email,
+        final String password,
+        final UserRole userRole
     ) {
         this.userId = userId;
         this.email = email;
         this.password = password;
-        this.authorities = authorities;
+        this.userRole = userRole;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.authorities.stream()
-            .map(authority -> new SimpleGrantedAuthority(authority.getAuthorityName()))
-            .collect(Collectors.toList());
-    }
-
-    public Set<Authority> getSetAuthorities() {
-        return authorities;
+        return Collections.singletonList(new SimpleGrantedAuthority(userRole.name()));
     }
 
     @Override

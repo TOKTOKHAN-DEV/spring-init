@@ -1,8 +1,8 @@
 package com.spring.spring_init.common.security.jwt;
 
 import com.spring.spring_init.common.security.user.UserDetailsImpl;
-import com.spring.spring_init.user.entity.Authority;
 import com.spring.spring_init.user.entity.User;
+import com.spring.spring_init.user.entity.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -13,9 +13,6 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,9 +105,7 @@ public class TokenProvider implements InitializingBean {
                 .setSubject(userDetails.getEmail())
                 .claim(USER_ID, userDetails.getUserId())
                 .claim(AUTHORITIES_KEY,
-                    userDetails.getSetAuthorities().stream()
-                        .map(Authority::getAuthorityName)
-                        .toList()
+                    userDetails.getUserRole()
                 )
                 .setIssuedAt(date)
                 .setExpiration(new Date(date.getTime() +
@@ -158,13 +153,10 @@ public class TokenProvider implements InitializingBean {
         Long userId = ((Number) claims.get(USER_ID)).longValue();
         String username = claims.getSubject();
         //맘대로 캐스팅 했다가 타입 안맞는 경우가 생길 수 있을까?
-        List<String> roles = (List<String>) claims.get(AUTHORITIES_KEY);
+        UserRole userRole = (UserRole) claims.get(AUTHORITIES_KEY);
 
-        Set<Authority> authorities = roles.stream()
-            .map(Authority::new)
-            .collect(Collectors.toSet());
 
-        return new UserDetailsImpl(userId, username, authorities);
+        return new UserDetailsImpl(userId, username, userRole);
     }
 
     private Claims parseClaims(final String accessToken) {

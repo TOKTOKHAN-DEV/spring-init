@@ -29,9 +29,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         );
         return new UserDetailsImpl(
             user.getUserId(),
-            user.getPenName(),
             user.getPassword(),
-            user.getAuthorities()
+            user.getUserRole()
         );
     }
 }

@@ -133,7 +133,6 @@ public class MailSender {
         Context context = new Context();
         context.setVariable("protocol", protocol);
         context.setVariable("domain", domain);
-        context.setVariable("penName", user.getPenName());
         context.setVariable("uid", emailTokenGenerator.generateUidByUserId(user.getUserId()));
         context.setVariable("token", token);
         context.setVariable("expireTime", expireTime);

@@ -25,8 +25,6 @@ import com.spring.spring_init.verify.exception.EmailVerifyExceptionCode;
 import com.spring.spring_init.verify.repository.EmailVerifyRepository;
 import com.spring.spring_init.verify.service.EmailTokenGenerator;
 import com.spring.spring_init.verify.service.MailSender;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -67,16 +65,11 @@ public class UserService {
         //비밀번호 확인란 일치 여부 검증
         checkPasswordConfirm(requestDto);
 
-        //유저 권한
-        Set<UserRole> userRoles = new HashSet<>();
-        userRoles.add(UserRole.ROLE_USER);
-
         User savedUser = userRepository.save(
             new User(
                 requestDto.getEmail(),
                 passwordEncoder.encode(requestDto.getPassword()),
-                userRoles,
-                requestDto.getPenName()
+                UserRole.ROLE_USER
             ));
 
         //인증 관련 이메일 기록 전부 삭제 처리

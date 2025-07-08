@@ -17,10 +17,6 @@ public class UserInfoResponseDto {
 
     public UserInfoResponseDto(User user) {
         this.id = user.getUserId();
-        this.penName = user.getPenName();
         this.email = user.getEmail();
-        if (user.getPaymentDate() != null) {
-            this.paymentDate = user.getPaymentDate().toString();
-        }
     }
 }

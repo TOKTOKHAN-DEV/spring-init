@@ -16,6 +16,5 @@ public class RegisterUserResponseDto {
 
     public RegisterUserResponseDto(User user) {
         this.userId = user.getUserId();
-        this.username = user.getPenName();
     }
 }
