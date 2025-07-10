@@ -1,8 +1,12 @@
 package com.spring.spring_init.user.entity;
 
 import com.spring.spring_init.common.base.BaseEntity;
+import com.spring.spring_init.oauth.OAuthProvider;
+import com.spring.spring_init.oauth.userInfo.OAuth2UserInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,6 +44,13 @@ public class User extends BaseEntity {
     @Column(name = "user_role", nullable = false)
     private UserRole userRole;
 
+    @Column(name = "provider")
+    @Enumerated(EnumType.STRING)
+    private OAuthProvider provider;
+
+    @Column(name = "provider_id")
+    private String providerId;
+
     @CreationTimestamp
     @Column(name = "date_joined", nullable = false, updatable = false, columnDefinition = "timestamptz")
     private LocalDateTime dateJoined;
@@ -52,6 +63,17 @@ public class User extends BaseEntity {
         this.email = email;
         this.password = password;
         this.userRole = userRole;
+    }
+
+    public User(
+        OAuth2UserInfo userInfo,
+        OAuthProvider authProvider
+    ) {
+        this.providerId = userInfo.getId();
+        this.email = userInfo.getEmail();
+        this.password = "password";
+        this.provider = authProvider;
+        this.userRole = UserRole.ROLE_USER;
     }
 
     // 비밀번호 변경

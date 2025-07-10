@@ -3,6 +3,9 @@ package com.spring.spring_init.common.security.config;
 import com.spring.spring_init.common.security.exception.JwtAccessDeniedHandler;
 import com.spring.spring_init.common.security.exception.JwtAuthenticationEntryPoint;
 import com.spring.spring_init.common.security.jwt.JwtTokenFilter;
+import com.spring.spring_init.oauth.handler.OAuth2AuthenticationFailureHandler;
+import com.spring.spring_init.oauth.handler.OAuth2AuthenticationSuccessHandler;
+import com.spring.spring_init.oauth.service.CustomOauth2UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +35,10 @@ public class SecurityConfig {
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CorsProperties corsProperties;
+    private final CustomOauth2UserService customOauth2UserService;
+
+    private final OAuth2AuthenticationSuccessHandler successHandler;
+    private final OAuth2AuthenticationFailureHandler failureHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -55,15 +62,25 @@ public class SecurityConfig {
             .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
         );
 
-        //세션 관리 상태 없음으로 구성, Spring Security가 세션 생성 or 사용 X
-        httpSecurity.sessionManagement(sessionManagement -> sessionManagement
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        httpSecurity
+            .sessionManagement(sessionManagement ->
+                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        //todo: social login 사용하지 않는다면 삭제
+        httpSecurity.oauth2Login(configure ->
+            configure
+                .userInfoEndpoint(config -> config.userService(customOauth2UserService))
+                .successHandler(successHandler)
+                .failureHandler(failureHandler)
         );
 
         //권한 규칙 구성 시작
         httpSecurity
             .authorizeHttpRequests(
                 authorize -> authorize
+                    //
+                    .requestMatchers("/**").permitAll()
+
                     //health check
                     .requestMatchers("/health").permitAll()
 
