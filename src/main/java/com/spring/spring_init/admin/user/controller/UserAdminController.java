@@ -1,6 +1,8 @@
 package com.spring.spring_init.admin.user.controller;
 
+import com.spring.spring_init.admin.user.dto.response.UserAdminInfo;
 import com.spring.spring_init.admin.user.service.UserAdminService;
+import com.spring.spring_init.common.dto.PageResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,6 +27,10 @@ public class UserAdminController {
     public String userPage(
         Model model
     ) {
+        PageResponseDTO<UserAdminInfo> userInfoList =
+            userAdminService.getAllUser();
+
+        model.addAttribute("data", userInfoList);
         return "admin/users";
     }
 }
