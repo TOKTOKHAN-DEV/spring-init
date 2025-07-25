@@ -1,0 +1,76 @@
+.sidebar {
+  width: 200px; /* 사이드바 너비 */
+  background-color: #ECECEC; /* 사이드바 배경색 */
+  color: black; /* 텍스트 색상 */
+  position: fixed; /* 사이드바를 고정 */
+  top: 60px; /* 헤더 아래에 위치하도록 설정 */
+  left: 0; /* 왼쪽에 붙도록 설정 */
+  height: calc(100vh - 60px); /* 화면 전체 높이에서 헤더 높이를 빼서 사이드바의 높이를 설정 */
+}
+
+.sidebar h2 {
+  padding-left: 20px; /* 왼쪽 여백 20px */
+  font-size: 18px; /* 글자 크기 18px */
+  font-weight: bold; /* 글자 두껍게 설정 */
+  margin-bottom: 10px; /* 아래쪽 마진 10px */
+}
+
+.sidebar a {
+  display: block; /* 링크를 블록 요소로 설정하여 전체 영역 클릭 가능하도록 함 */
+  color: #171717; /* 링크 텍스트 색상 설정 */
+  padding-left: 25px; /* 왼쪽 여백 25px */
+  padding-top: 10px; /* 위쪽 여백 10px */
+  padding-bottom: 10px; /* 아래쪽 여백 10px */
+  text-decoration: none; /* 링크의 기본 밑줄 제거 */
+}
+
+.arrow-icon {
+  margin-left: auto; /* 아이콘을 오른쪽 끝으로 밀기 위해 자동 왼쪽 여백 설정 */
+  transition: transform 0.1s ease; /* 변형 효과에 0.1초 부드러운 전환 적용 */
+}
+.arrow-icon.open {
+  transform: rotate(180deg); /* 아이콘을 180도 회전 */
+}
+
+a.menu-parent:hover,
+button.menu-parent:hover,
+a.submenu-item:hover
+{
+  background-color: #D9D9D9; /* 연한 회색 배경으로 변경 */
+}
+
+a.menu-parent,
+button.menu-parent
+{
+  all: unset; /* 기본 스타일 초기화 */
+  font-family: 'Pretendard', sans-serif; /* Pretendard 폰트와 sans-serif 대체 폰트 사용 */
+  font-size: 15px; /* 글자 크기 15px */
+  font-weight: 500; /* 글자 두께 500으로 설정 */
+  color: #171717; /* 텍스트 색상 설정 */
+  display: flex; /* 플렉스 박스로 내부 아이템 정렬 */
+  align-items: center; /* 세로 중앙 정렬 */
+  justify-content: space-between; /* 아이템 사이 공간 최대한 벌리기 */
+  padding: 10px 20px; /* 상하 10px, 좌우 20px 패딩 설정 */
+  box-sizing: border-box; /* 박스 크기 계산 방식을 border-box로 설정 */
+  overflow: hidden; /* 내용이 넘칠 경우 숨김 처리 */
+  width: 100%; /* 너비 100%로 설정 */
+  text-decoration: none; /* 링크 밑줄 제거 */
+  background-color: transparent; /* 배경색 투명하게 설정 */
+  cursor: pointer; /* 마우스 커서를 포인터로 변경 */
+}
+
+.menu-content {
+  display: flex; /* 플렉스 박스로 내부 아이템 정렬 */
+  align-items: center; /* 세로 중앙 정렬 */
+  width: 100%; /* 너비 100%로 설정 */
+  color: black; /* 텍스트 색상 */
+}
+
+.submenu-item {
+  max-width: 100%; /* 최대 너비 100%로 설정 */
+  background-color: #ECECEC; /* 배경색 연한 회색으로 설정 */
+  color: #f0f0f0; /* 텍스트 색상을 매우 밝은 회색으로 설정 (사실상 거의 흰색) */
+  font-size: 13px; /* 글자 크기 13px */
+  display: block; /* 블록 요소로 설정하여 전체 영역 클릭 가능하도록 함 */
+  text-decoration: none; /* 링크 밑줄 제거 */
+}

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>[PROJECT] Login</title>
+  <style>
+    /* 전체 페이지 배경 */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* 로그인 박스 스타일 */
+    .login-container {
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      margin-top: 50px;
+      box-sizing: border-box;
+    }
+
+    /* 타이틀 스타일 */
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 20px;
+    }
+
+    /* 로그인 폼 간격 추가 */
+    loginForm {
+      margin-top: 24px;
+    }
+
+    /* 라벨 스타일 */
+    label {
+      font-size: 16px;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    /* 입력 필드 스타일 */
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    /* 로그인 버튼 스타일 */
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      box-sizing: border-box;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 에러 메시지 스타일 */
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>[PROJECT] Admin Login</h2>
+
+  <form id="loginForm" method="post">
+    <label for="email">Email</label>
+    <input type="text" id="email" name="email" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit">Login</button>
+  </form>
+
+  <div id="errorContainer" class="error" style="display: none;">
+    <p id="errorMessage"></p>
+  </div>
+</div>
+
+</body>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    const loginForm = document.getElementById('loginForm');
+    const errorContainer = document.getElementById('errorContainer');
+    const errorMessage = document.getElementById('errorMessage');
+
+    loginForm.addEventListener('submit', function (event) {
+      event.preventDefault();  // 폼의 기본 제출 동작을 막음
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // 로그인 요청
+      fetch('/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        }),
+      })
+      .then(response => {
+        if (response.ok) {
+          // 200 응답 시 로그인 성공
+          window.location.href = '/admin/users';
+        } else if (response.status === 400) {
+          // 400 에러가 오면 팝업에 에러 메시지 표시
+          return response.json();  // 응답 본문을 JSON으로 파싱
+        } else if (response.status === 401) {
+          // 400 에러가 오면 팝업에 에러 메시지 표시
+          return response.json();  // 응답 본문을 JSON으로 파싱
+        } else {
+          throw new Error('로그인 요청에 실패했습니다.');
+        }
+      })
+      .then(data => {
+        if (data && data.errorCode && data.message) {
+          errorContainer.style.display = 'block';  // 에러 메시지 표시
+          errorMessage.textContent = data.message;  // 에러 메시지 출력
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('알 수 없는 오류가 발생했습니다.');
+      });
+    });
+  });
+</script>
+
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+  <link rel="stylesheet" th:href="@{/css/header.css}">
+  <link rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<!--헤더-->
+<header>
+  <span class="brand">
+    <!-- 로고 이미지 or 프로젝트 명으로 변경   -->
+    <img src="/images/tagme_logo.svg" alt="[PROJECT]" class="logo">
+  </span>
+
+  <!-- 상단 우측 메뉴 커스텀  -->
+  <div class="right-container">
+    <form th:action="@{/admin/users/password-changes}" method="get">
+      <button class="logout-button" type="submit">비밀번호 변경</button>
+    </form>
+    <form th:action="@{/admin/logout}" method="post">
+    <button class="logout-button" type="submit">로그아웃</button>
+  </form>
+  </div>
+</header>
+
+<!-- 좌측 사이드바 -->
+<div class="sidebar">
+
+  <h2>Menu</h2>
+
+  <!-- 부모 메뉴 -->
+  <button type="button" class="menu-parent" onclick="toggleMenu('user-submenu', 'user-arrow')">
+    <div class="menu-content">
+      <span class="menu-label">회원 관리</span>
+    </div>
+    <img id="user-arrow" class="arrow-icon" src="/icons/arrow_down.svg" alt="arrow" width="12" />
+  </button>
+    <!-- 자식 메뉴 -->
+    <div id="user-submenu" style="display:none; padding-left: 15px;">
+      <a href="/admin/users" class="submenu-item">회원정보</a>
+      <a href="/admin/withdrawn-users" class="submenu-item">탈퇴회원</a>
+    </div>
+
+
+  <!-- 추가 메뉴 폼 -->
+  <a href="/admin/projects" class="menu-parent">
+    <div class="menu-content">
+      <span class="menu-label">프로젝트</span>
+    </div>
+  </a>
+
+</div>
+
+<!-- 본문 부분을 위한 fragment 정의 -->
+<div class="content" th:fragment="content">
+  <th:block layout:fragment="content"></th:block>
+</div>
+
+</body>
+<script>
+  function toggleMenu(menuId, arrowId) {
+    const menu = document.getElementById(menuId);
+    const arrow = document.getElementById(arrowId);
+    const isOpen = menu.style.display === "block";
+    menu.style.display = isOpen ? "none" : "block";
+    arrow.classList.toggle("open", !isOpen);
+  }
+</script>
+</html>

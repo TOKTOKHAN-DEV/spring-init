@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout}"
+      layout:fragment="content"
+>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" th:href="@{/css/layout.css}">
+  <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+  <link rel="stylesheet" th:href="@{/css/listPage.css}">
+  <link rel="stylesheet" th:href="@{/css/pagination.css}">
+</head>
+<body>
+
+<!-- 오른쪽 컨텐츠 영역 -->
+<div class="content">
+
+  <!-- 상단 제목 -->
+  <h2>회원 정보</h2>
+
+  <!-- 테이블 예시 -->
+  <table class="table" id="adminTable">
+    <!-- 테이블 헤더 -->
+    <thead>
+      <tr>
+        <th id="sortId" style="cursor: pointer;">ID</th>
+        <th id="sortEmail" style="cursor: pointer;">Email</th>
+        <th id="sortNickname" style="cursor: pointer;">Nickname</th>
+        <th id="sortIndustry" style="cursor: pointer;">산업</th>
+        <th id="sortOrgSize" style="cursor: pointer;">조직 규모</th>
+        <th id="sortPosition" style="cursor: pointer;">조직 내 역할</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="user : ${data}">
+      <td><a th:href="@{/admin/users/{userId}(userId=${user.userId})}" th:text="${user.userId}"></a>
+      </td>
+      <td th:text="${user.email}"></td>
+      <td th:text="${user.nickname}"></td>
+      <td th:text="${user.industry}"></td>
+      <td th:text="${user.orgSize}"></td>
+      <td th:text="${user.position}"></td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

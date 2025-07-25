@@ -72,6 +72,10 @@ dependencies {
     implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1")
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-secrets-manager'
     implementation 'com.amazonaws.secretsmanager:aws-secretsmanager-jdbc:1.0.6'
+
+    //thymeleaf
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
 }
 
 tasks.named('test') {

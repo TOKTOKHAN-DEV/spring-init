@@ -1,0 +1,23 @@
+/* 기본 레이아웃 스타일 */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f5;
+  margin-top: 60px;
+}
+
+/* 오른쪽 컨텐츠 영역 */
+.content {
+  margin-left: 100px;
+  padding: 20px;
+  flex-grow: 1;
+  flex-direction: column;
+  display: flex;
+}
+
+.content h2 {
+  margin-top: 0;
+}
