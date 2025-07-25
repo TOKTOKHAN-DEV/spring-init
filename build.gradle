@@ -73,6 +73,12 @@ dependencies {
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-secrets-manager'
     implementation 'com.amazonaws.secretsmanager:aws-secretsmanager-jdbc:1.0.6'
 
+    //queryDsl
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
     //thymeleaf
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
