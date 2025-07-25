@@ -1,12 +1,3 @@
-.sidebar {
-  width: 200px; /* 사이드바 너비 */
-  background-color: #ECECEC; /* 사이드바 배경색 */
-  color: black; /* 텍스트 색상 */
-  position: fixed; /* 사이드바를 고정 */
-  top: 60px; /* 헤더 아래에 위치하도록 설정 */
-  left: 0; /* 왼쪽에 붙도록 설정 */
-  height: calc(100vh - 60px); /* 화면 전체 높이에서 헤더 높이를 빼서 사이드바의 높이를 설정 */
-}
 
 .sidebar h2 {
   padding-left: 20px; /* 왼쪽 여백 20px */

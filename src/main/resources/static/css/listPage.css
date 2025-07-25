@@ -9,6 +9,7 @@
 
 /* 테이블 스타일 */
 table {
+  table-layout: auto;
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
@@ -19,13 +20,37 @@ table, th, td {
 }
 
 th, td {
-  padding: 10px;
+  padding: 7px;
   text-align: left;
 }
 
+/* 테이블 헤더 */
 th {
   background-color: #f2f2f2;
+  font-size: 13px;
+}
+
+/* 테이블 내용 a 태그 */
+td a {
+  color: black;         /* 텍스트 색상: 검정 */
+  text-decoration: underline; /* 밑줄 유지 */
+}
+
+/* Id 컬럼은 텍스트 중앙 정렬*/
+td.id-column {
+  text-align: center;
+}
+
+/* 테이블 내용 */
+td {
   font-size: 12px;
+}
+
+/* 테이블 1열 너비 지정*/
+td:first-child,
+th:first-child {
+  white-space: nowrap;
+  width: 1%;
 }
 
 /* 페이지 네비게이션 스타일 */

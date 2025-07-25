@@ -1,19 +1,3 @@
-/* 헤더 스타일 */
-header {
-  box-sizing: border-box;
-  display: flex; /* 플렉스박스를 사용해 레이아웃을 정렬 */
-  justify-content: space-between; /* 왼쪽과 오른쪽에 공간 배분 */
-  align-items: center; /* 세로 정렬 */
-  height: 60px; /* 헤더 높이 설정 */
-  background-color: #171717; /* 헤더 배경색 */
-  color: white; /* 텍스트 색상 */
-  padding: 0 20px; /* 왼쪽, 오른쪽 여백 */
-  position: fixed; /* 헤더를 상단에 고정 */
-  width: 100%; /* 전체 너비 차지 */
-  top: 0; /* 페이지 상단에 고정 */
-  left: 0; /* 왼쪽 끝에 위치 */
-  z-index: 1000; /* 다른 요소들 위에 위치하도록 설정 */
-}
 
 header .brand {
   font-size: 24px; /* 텍스트 크기 */
