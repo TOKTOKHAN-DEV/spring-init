@@ -68,7 +68,7 @@ Resources:
       DBSubnetGroupName: !Ref RDSSubnetGroupDev
       Engine: postgres
       PubliclyAccessible: true
-      DBInstanceClass: db.t3.micro # 기본 db.t4g.small
+      DBInstanceClass: db.t4g.micro # 기본 db.t4g.small
       EngineVersion: 16.4
       DBParameterGroupName: default.postgres16
       Port: 5432
