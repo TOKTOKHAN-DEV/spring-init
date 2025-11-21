@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - develop
+      - development
 
 jobs:
   continuous_integration:
@@ -31,7 +31,7 @@ jobs:
           CREATE_SECRET: ${{secrets.APPLICATION_DEV_YML}}
           CREATE_SECRET_DIR: src/main/resources
           CREATE_SECRET_DIR_FILE_NAME: application-dev.yml
-        run: echo $CREATE_SECRET > $CREATE_SECRET_DIR/$CREATE_SECRET_DIR_FILE_NAME
+        run: echo "$CREATE_SECRET" > $CREATE_SECRET_DIR/$CREATE_SECRET_DIR_FILE_NAME
 
       # application build
       - name: Build with Gradle
