@@ -37,3 +37,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Claude Code Local Settings ###
+# 개인별 Claude Code 설정 (팀 공유 안함)
+.claude/settings.local.json
+.claude/CLAUDE.local.md
