@@ -1,5 +1,10 @@
 package com.spring.spring_init.common.security.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spring.spring_init.common.dto.ErrorResponseDTO;
+import com.spring.spring_init.common.security.exception.AuthExceptionCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,11 +34,35 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         String token = getTokenFromHeader(request);
 
-        if (token != null && tokenProvider.validateToken(token)) {
-            Authentication authentication = tokenProvider.createAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            if (token != null && tokenProvider.validateToken(token)) {
+                Authentication authentication = tokenProvider.createAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            String jsonResponse = new ObjectMapper().writeValueAsString(
+                new ErrorResponseDTO(
+                    AuthExceptionCode.TOKEN_EXPIRED.getCode(),
+                    AuthExceptionCode.TOKEN_EXPIRED.getMessage()
+                )
+            );
+            response.setContentType("application/json; charset=UTF-8");
+            response.setStatus(444);
+            response.getWriter().write(jsonResponse);
+            response.getWriter().flush();
+        } catch (JwtException e) {
+            String jsonResponse = new ObjectMapper().writeValueAsString(
+                new ErrorResponseDTO(
+                    AuthExceptionCode.UNAUTHORIZED_ACCESS.getCode(),
+                    AuthExceptionCode.UNAUTHORIZED_ACCESS.getMessage()
+                )
+            );
+            response.setContentType("application/json; charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(jsonResponse);
+            response.getWriter().flush();
         }
-        filterChain.doFilter(request, response);
     }
 
     private String getTokenFromHeader(HttpServletRequest request) {

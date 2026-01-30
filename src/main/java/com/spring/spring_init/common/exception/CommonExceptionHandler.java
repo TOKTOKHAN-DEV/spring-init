@@ -45,4 +45,16 @@ public class CommonExceptionHandler implements CommonExceptionHandlerApi {
             )
         );
     }
+
+    @JsonView(Common.class)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDTO> handleException(Exception e) {
+        return ResponseEntity.status(500)
+            .body(
+                new ErrorResponseDTO(
+                    CommonExceptionCode.INTERNAL_SERVER_ERROR.getCode(),
+                    CommonExceptionCode.INTERNAL_SERVER_ERROR.getMessage()
+                )
+            );
+    }
 }
