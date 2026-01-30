@@ -1,26 +1,19 @@
-package com.spring.spring_init.oauth.userInfo;
+package com.spring.spring_init.oauth.userInfo
 
-import com.spring.spring_init.oauth.OAuthProvider;
-import java.util.Map;
+import com.spring.spring_init.oauth.OAuthProvider
 
-public class OAuth2UserInfoFactory {
+object OAuth2UserInfoFactory {
 
-    public static OAuth2UserInfo getOAuth2MemberInfo(
-        OAuthProvider oAuthProvider,
-        Map<String, Object> attributes
-    ) {
-        switch (oAuthProvider) {
-            case GOOGLE -> {
-                return new GoogleOAuth2UserInfo(attributes);
-            }
-            case KAKAO -> {
-                return new KakaoOAuth2UserInfo(attributes);
-            }
-            case NAVER -> {
-                return new NaverOAuth2UserInfo(attributes);
-            }
-//            default -> throw new UnsupportedProviderException();
-            default -> throw new RuntimeException("UnsupportedProviderException");
+    @JvmStatic
+    fun getOAuth2MemberInfo(
+        oAuthProvider: OAuthProvider,
+        attributes: Map<String, Any>
+    ): OAuth2UserInfo {
+        return when (oAuthProvider) {
+            OAuthProvider.GOOGLE -> GoogleOAuth2UserInfo(attributes)
+            OAuthProvider.KAKAO -> KakaoOAuth2UserInfo(attributes)
+            OAuthProvider.NAVER -> NaverOAuth2UserInfo(attributes)
+//            else -> throw UnsupportedProviderException()
         }
     }
 }

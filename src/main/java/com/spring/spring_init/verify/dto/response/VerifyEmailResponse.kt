@@ -1,15 +1,8 @@
-package com.spring.spring_init.verify.dto.response;
+package com.spring.spring_init.verify.dto.response
 
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class VerifyEmailResponse {
-
-    @NotNull(message = "email 필수 값 입니다")
-    private String email;
-}
+data class VerifyEmailResponse(
+    @field:NotNull(message = "email 필수 값 입니다")
+    val email: String
+)

@@ -1,25 +1,18 @@
-package com.spring.spring_init.user.dto.request;
+package com.spring.spring_init.user.dto.request
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class PasswordChangeRequestDto {
-
+data class PasswordChangeRequestDto(
     @Schema(name = "currentPassword", description = "기존 비밀번호")
-    @NotNull(message = "currentPassword 필수 값 입니다.")
-    private String currentPassword;
+    @field:NotNull(message = "currentPassword 필수 값 입니다.")
+    val currentPassword: String,
 
     @Schema(name = "password", description = "새로운 비밀번호")
-    @NotNull(message = "password 필수 값 입니다.")
-    private String password;
+    @field:NotNull(message = "password 필수 값 입니다.")
+    val password: String,
 
     @Schema(name = "passwordConfirm", description = "새로운 비밀번호 확인")
-    @NotNull(message = "passwordConfirm 필수 값 입니다.")
-    private String passwordConfirm;
-}
+    @field:NotNull(message = "passwordConfirm 필수 값 입니다.")
+    val passwordConfirm: String
+)

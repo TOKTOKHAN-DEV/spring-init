@@ -1,61 +1,55 @@
-package com.spring.spring_init.oauth.service;
+package com.spring.spring_init.oauth.service
 
-import com.spring.spring_init.oauth.OAuthProvider;
-import com.spring.spring_init.oauth.PrincipalDetailsImpl;
-import com.spring.spring_init.oauth.userInfo.OAuth2UserInfo;
-import com.spring.spring_init.oauth.userInfo.OAuth2UserInfoFactory;
-import com.spring.spring_init.user.entity.User;
-import com.spring.spring_init.user.repository.UserRepository;
-import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Service;
+import com.spring.spring_init.oauth.OAuthProvider
+import com.spring.spring_init.oauth.PrincipalDetailsImpl
+import com.spring.spring_init.oauth.userInfo.OAuth2UserInfo
+import com.spring.spring_init.oauth.userInfo.OAuth2UserInfoFactory
+import com.spring.spring_init.user.entity.User
+import com.spring.spring_init.user.repository.UserRepository
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.core.user.OAuth2User
+import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-public class CustomOauth2UserService extends DefaultOAuth2UserService {
+class CustomOauth2UserService(
+    private val userRepository: UserRepository
+) : DefaultOAuth2UserService() {
 
-    private final UserRepository userRepository;
+    override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User {
+        val user = super.loadUser(userRequest)
 
-    @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User user = super.loadUser(userRequest);
-
-        try {
-            return process(userRequest, user);
-        } catch (Exception e) {
-            throw new RuntimeException();
+        return try {
+            process(userRequest, user)
+        } catch (e: Exception) {
+            throw RuntimeException()
         }
     }
 
-    private OAuth2User process(OAuth2UserRequest userRequest, OAuth2User oauth2User) {
-        OAuthProvider authProvider = OAuthProvider.valueOf(
+    private fun process(userRequest: OAuth2UserRequest, oauth2User: OAuth2User): OAuth2User {
+        val authProvider = OAuthProvider.valueOf(
             userRequest
-                .getClientRegistration()
-                .getRegistrationId()
-                .toUpperCase()
-        );
-        OAuth2UserInfo memberInfo = OAuth2UserInfoFactory.getOAuth2MemberInfo(authProvider, oauth2User.getAttributes());
+                .clientRegistration
+                .registrationId
+                .uppercase()
+        )
+        val memberInfo = OAuth2UserInfoFactory.getOAuth2MemberInfo(authProvider, oauth2User.attributes)
 
-        Optional<User> userOptional = userRepository.findByOauthId(memberInfo.getId());
+        val userOptional = userRepository.findByOauthId(memberInfo.getId())
 
-        User user;
-        if (userOptional.isPresent()) {
-            user = userOptional.get();
-            if (authProvider != user.getProvider()) {
-//                throw new OAuthProviderMissMatchException();
-                throw new RuntimeException();
+        val user: User = if (userOptional.isPresent) {
+            val existingUser = userOptional.get()
+            if (authProvider != existingUser.provider) {
+                throw RuntimeException()
             }
+            existingUser
         } else {
-            user = createMember(memberInfo, authProvider);
+            createMember(memberInfo, authProvider)
         }
-        return new PrincipalDetailsImpl(user, oauth2User.getAttributes());
+        return PrincipalDetailsImpl(user, oauth2User.attributes)
     }
 
-    private User createMember(OAuth2UserInfo userInfo, OAuthProvider authProvider) {
-        return userRepository.save(new User(userInfo, authProvider));
+    private fun createMember(userInfo: OAuth2UserInfo, authProvider: OAuthProvider): User {
+        return userRepository.save(User(userInfo, authProvider))
     }
 }

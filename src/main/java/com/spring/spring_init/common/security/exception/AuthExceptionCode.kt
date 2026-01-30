@@ -1,22 +1,16 @@
-package com.spring.spring_init.common.security.exception;
+package com.spring.spring_init.common.security.exception
 
-import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import com.spring.spring_init.common.base.BaseErrorCode
+import org.springframework.http.HttpStatus
 
-@Getter
-public enum AuthExceptionCode {
+enum class AuthExceptionCode(
+    private val httpStatusCode: HttpStatus,
+    override val code: String,
+    override val message: String
+) : BaseErrorCode {
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED_ACCESS", "인증이 필요한 접근입니다"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "접근이 거부되었습니다");
 
-    private final HttpStatus httpStatusCode;
-
-    private final String code;
-
-    private final String message;
-
-    AuthExceptionCode(HttpStatus httpStatusCode, String code, String message) {
-        this.httpStatusCode = httpStatusCode;
-        this.code = code;
-        this.message = message;
-    }
+    override val httpStatus: HttpStatus
+        get() = httpStatusCode
 }

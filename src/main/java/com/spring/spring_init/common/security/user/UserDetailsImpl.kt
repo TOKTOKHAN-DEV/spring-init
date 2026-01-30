@@ -1,57 +1,37 @@
-package com.spring.spring_init.common.security.user;
+package com.spring.spring_init.common.security.user
 
-import com.spring.spring_init.user.entity.UserRole;
-import java.util.Collection;
-import java.util.Collections;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import com.spring.spring_init.user.entity.UserRole
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
 
-@Getter
-@NoArgsConstructor
-public class UserDetailsImpl implements UserDetails {
+class UserDetailsImpl(
+    @JvmField val userId: Long,
+    @JvmField val email: String,
+    private var password: String? = null,
+    @JvmField val userRole: UserRole
+) : UserDetails {
 
-    private Long userId;
-    private String email;
-    private String password;
-    private UserRole userRole;
+    constructor(
+        userId: Long,
+        email: String,
+        userRole: UserRole
+    ) : this(userId, email, null, userRole)
 
-    public UserDetailsImpl(
-        final Long userId,
-        final String email,
-        final UserRole userRole
-    ) {
-        this.userId = userId;
-        this.email = email;
-        this.userRole = userRole;
+    override fun getAuthorities(): Collection<GrantedAuthority> {
+        return listOf(SimpleGrantedAuthority(userRole.name))
     }
 
-    public UserDetailsImpl(
-        final Long userId,
-        final String email,
-        final String password,
-        final UserRole userRole
-    ) {
-        this.userId = userId;
-        this.email = email;
-        this.password = password;
-        this.userRole = userRole;
+    override fun getPassword(): String? {
+        return password
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(userRole.name()));
+    override fun getUsername(): String {
+        return email
     }
 
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
+    override fun isAccountNonExpired(): Boolean = true
+    override fun isAccountNonLocked(): Boolean = true
+    override fun isCredentialsNonExpired(): Boolean = true
+    override fun isEnabled(): Boolean = true
 }

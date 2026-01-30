@@ -1,50 +1,44 @@
-package com.spring.spring_init.oauth.handler;
+package com.spring.spring_init.oauth.handler
 
-import com.spring.spring_init.common.security.jwt.TokenProvider;
-import com.spring.spring_init.common.security.jwt.TokenResponseDto;
-import com.spring.spring_init.oauth.PrincipalDetailsImpl;
-import com.spring.spring_init.user.entity.User;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
+import com.spring.spring_init.common.security.jwt.TokenProvider
+import com.spring.spring_init.oauth.PrincipalDetailsImpl
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.core.Authentication
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
+import org.springframework.stereotype.Component
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
-public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+class OAuth2AuthenticationSuccessHandler(
+    private val tokenProvider: TokenProvider
+) : SimpleUrlAuthenticationSuccessHandler() {
 
-    @Value("${common.full-domain}")
-    private String domain;
+    @Value("\${common.full-domain}")
+    private lateinit var domain: String
 
-    private final TokenProvider tokenProvider;
+    companion object {
+        private val log = LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler::class.java)
+    }
 
-    @Override
-    public void onAuthenticationSuccess(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        Authentication authentication
-    ) throws IOException {
-
+    override fun onAuthenticationSuccess(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication
+    ) {
         // 1. PrincipalDetailsImpl 꺼내기
-        PrincipalDetailsImpl principal = (PrincipalDetailsImpl) authentication.getPrincipal();
-        User user = principal.getUser(); // 이건 DB에 저장된 User 객체
+        val principal = authentication.principal as PrincipalDetailsImpl
+        val user = principal.user // 이건 DB에 저장된 User 객체
 
-        TokenResponseDto tokenByOauth = tokenProvider.getTokenByOauth(user);
+        val tokenByOauth = tokenProvider.getTokenByOauth(user)
+        val accessToken = tokenByOauth.accessToken.replace("\\s+".toRegex(), "")
 
-        String accessToken = tokenByOauth.getAccessToken().replaceAll("\\s+", "");
-
-        //프로젝트 구현 방식에 따라 알맞게 구현
-        getRedirectStrategy()
-            .sendRedirect(
-                request,
-                response,
-                "http://localhost:8080/complete?"+"token="+accessToken
-            );
+        // 프로젝트 구현 방식에 따라 알맞게 구현
+        redirectStrategy.sendRedirect(
+            request,
+            response,
+            "http://localhost:8080/complete?token=$accessToken"
+        )
     }
 }

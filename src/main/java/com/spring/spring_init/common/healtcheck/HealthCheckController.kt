@@ -1,14 +1,14 @@
-package com.spring.spring_init.common.healtcheck;
+package com.spring.spring_init.common.healtcheck
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
-public class HealthCheckController {
+class HealthCheckController {
 
     @GetMapping("/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("OK");
+    fun healthCheck(): ResponseEntity<String> {
+        return ResponseEntity.ok("OK")
     }
 }

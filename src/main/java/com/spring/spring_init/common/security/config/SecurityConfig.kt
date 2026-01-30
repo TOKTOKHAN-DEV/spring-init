@@ -1,83 +1,76 @@
-package com.spring.spring_init.common.security.config;
+package com.spring.spring_init.common.security.config
 
-import com.spring.spring_init.common.security.exception.JwtAccessDeniedHandler;
-import com.spring.spring_init.common.security.exception.JwtAuthenticationEntryPoint;
-import com.spring.spring_init.common.security.jwt.JwtTokenFilter;
-import com.spring.spring_init.oauth.handler.OAuth2AuthenticationFailureHandler;
-import com.spring.spring_init.oauth.handler.OAuth2AuthenticationSuccessHandler;
-import com.spring.spring_init.oauth.service.CustomOauth2UserService;
-import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-
+import com.spring.spring_init.common.security.exception.JwtAccessDeniedHandler
+import com.spring.spring_init.common.security.exception.JwtAuthenticationEntryPoint
+import com.spring.spring_init.common.security.jwt.JwtTokenFilter
+import com.spring.spring_init.oauth.handler.OAuth2AuthenticationFailureHandler
+import com.spring.spring_init.oauth.handler.OAuth2AuthenticationSuccessHandler
+import com.spring.spring_init.oauth.service.CustomOauth2UserService
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.Customizer
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
-@RequiredArgsConstructor
-public class SecurityConfig {
-
-    private final JwtTokenFilter jwtTokenFilter;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final CorsProperties corsProperties;
-    private final CustomOauth2UserService customOauth2UserService;
-
-    private final OAuth2AuthenticationSuccessHandler successHandler;
-    private final OAuth2AuthenticationFailureHandler failureHandler;
+class SecurityConfig(
+    private val jwtTokenFilter: JwtTokenFilter,
+    private val jwtAccessDeniedHandler: JwtAccessDeniedHandler,
+    private val jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint,
+    private val corsProperties: CorsProperties,
+    private val customOauth2UserService: CustomOauth2UserService,
+    private val successHandler: OAuth2AuthenticationSuccessHandler,
+    private val failureHandler: OAuth2AuthenticationFailureHandler
+) {
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    fun passwordEncoder(): PasswordEncoder {
+        return BCryptPasswordEncoder()
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    @Throws(Exception::class)
+    fun securityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
 
         //CSRF(Cross-Site Request Forgery) 보호 비활성화
         // 스프링 부트 3.x.x 버전 부터는 csrf().disable()이 적용 시 경고 문장을 막기위한 setting
-        httpSecurity.csrf(AbstractHttpConfigurer::disable);
-        httpSecurity.cors(Customizer.withDefaults());
+        httpSecurity.csrf { it.disable() }
+        httpSecurity.cors(Customizer.withDefaults())
 
         //HTTP 기본 인증 비활성화
-        httpSecurity.formLogin(AbstractHttpConfigurer::disable);
-        httpSecurity.httpBasic(AbstractHttpConfigurer::disable);
+        httpSecurity.formLogin { it.disable() }
+        httpSecurity.httpBasic { it.disable() }
 
         /** X-Frame-Options 비활성화 , iframe은 접근이 가능*/
-        httpSecurity.headers(headers -> headers
-            .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-        );
+        httpSecurity.headers { headers ->
+            headers.frameOptions { it.sameOrigin() }
+        }
 
-        httpSecurity
-            .sessionManagement(sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        httpSecurity.sessionManagement { sessionManagement ->
+            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        }
 
         //todo: social login 사용하지 않는다면 삭제
-        httpSecurity.oauth2Login(configure ->
+        httpSecurity.oauth2Login { configure ->
             configure
-                .userInfoEndpoint(config -> config.userService(customOauth2UserService))
+                .userInfoEndpoint { config -> config.userService(customOauth2UserService) }
                 .successHandler(successHandler)
                 .failureHandler(failureHandler)
-        );
+        }
 
         //권한 규칙 구성 시작
         httpSecurity
-            .authorizeHttpRequests(
-                authorize -> authorize
+            .authorizeHttpRequests { authorize ->
+                authorize
                     //
                     .requestMatchers("/**").permitAll()
 
@@ -101,27 +94,25 @@ public class SecurityConfig {
 
                     .requestMatchers("/test/**").permitAll()
                     .anyRequest().authenticated()
-            )
-            .exceptionHandling((exceptionHandling) -> exceptionHandling
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)      // 인증오류 (401 오류)
-                .accessDeniedHandler(jwtAccessDeniedHandler));
+            }
+            .exceptionHandling { exceptionHandling ->
+                exceptionHandling
+                    .authenticationEntryPoint(jwtAuthenticationEntryPoint)      // 인증오류 (401 오류)
+                    .accessDeniedHandler(jwtAccessDeniedHandler)
+            }
 
-        httpSecurity.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
 
-        return httpSecurity.build();
+        return httpSecurity.build()
     }
 
-
-    public CorsConfigurationSource corsConfigurationSource() {
-        return request -> {
-            CorsConfiguration config = new CorsConfiguration();
-            config.setAllowedOrigins(corsProperties.getAllowedOrigins()); // 허용 도메인 리스트 -> yml 파일에서 관리
-            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            config.addAllowedHeader("*");
-            config.setAllowCredentials(true);
-            config.addExposedHeader("Authorization");
-
-            return config;
-        };
+    fun corsConfigurationSource() = org.springframework.web.cors.CorsConfigurationSource { request ->
+        CorsConfiguration().apply {
+            allowedOrigins = corsProperties.allowedOrigins // 허용 도메인 리스트 -> yml 파일에서 관리
+            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            addAllowedHeader("*")
+            allowCredentials = true
+            addExposedHeader("Authorization")
+        }
     }
 }

@@ -1,106 +1,104 @@
-package com.spring.spring_init.common.apidocs;
+package com.spring.spring_init.common.apidocs
 
-import com.spring.spring_init.common.base.BaseErrorCode;
-import com.spring.spring_init.common.dto.ErrorResponseDTO;
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.examples.Example;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.MediaType;
-import io.swagger.v3.oas.models.responses.ApiResponse;
-import io.swagger.v3.oas.models.responses.ApiResponses;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.Builder;
-import org.springframework.util.StringUtils;
-import org.springframework.web.method.HandlerMethod;
+import com.spring.spring_init.common.base.BaseErrorCode
+import com.spring.spring_init.common.dto.ErrorResponseDTO
+import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.examples.Example
+import io.swagger.v3.oas.models.media.Content
+import io.swagger.v3.oas.models.media.MediaType
+import io.swagger.v3.oas.models.responses.ApiResponses
+import org.springframework.util.StringUtils
+import org.springframework.web.method.HandlerMethod
 
-public final class ApiExceptionExplainParser {
+object ApiExceptionExplainParser {
 
-    public static void parse(
-        Operation operation,
-        HandlerMethod handlerMethod
+    @JvmStatic
+    fun parse(
+        operation: Operation,
+        handlerMethod: HandlerMethod
     ) {
-        ApiResponseExplanations annotation = handlerMethod.getMethodAnnotation(
-            ApiResponseExplanations.class);
+        val annotation = handlerMethod.getMethodAnnotation(ApiResponseExplanations::class.java)
 
         if (annotation != null) {
-            generateExceptionResponseDocs(operation, annotation.errors());
+            generateExceptionResponseDocs(operation, annotation.errors)
         }
     }
 
-    private static void generateExceptionResponseDocs(
-        Operation operation,
-        ApiExceptionExplanation[] exceptions
+    private fun generateExceptionResponseDocs(
+        operation: Operation,
+        exceptions: Array<ApiExceptionExplanation>
     ) {
-        ApiResponses responses = operation.getResponses();
+        val responses = operation.responses
 
-        Map<Integer, List<ExampleHolder>> holders = Arrays.stream(exceptions)
-            .map(ExampleHolder::from)
-            .collect(Collectors.groupingBy(ExampleHolder::httpStatus));
+        val holders = exceptions
+            .map { ExampleHolder.from(it) }
+            .groupBy { it.httpStatus }
 
-        addExamplesToResponses(responses, holders);
+        addExamplesToResponses(responses, holders)
     }
 
-    @Builder(access = AccessLevel.PRIVATE)
-    private record ExampleHolder(
-        int httpStatus,
-        String name,
-        String mediaType,
-        String description,
-        Example holder
+    private data class ExampleHolder(
+        val httpStatus: Int,
+        val name: String,
+        val mediaType: String,
+        val description: String,
+        val holder: Example
     ) {
+        companion object {
+            fun from(annotation: ApiExceptionExplanation): ExampleHolder {
+                val errorCode = getErrorCode(annotation)
 
-        static ExampleHolder from(ApiExceptionExplanation annotation) {
-            BaseErrorCode errorCode = getErrorCode(annotation);
+                return ExampleHolder(
+                    httpStatus = errorCode.httpStatus.value(),
+                    name = if (StringUtils.hasText(annotation.name)) annotation.name else errorCode.message,
+                    mediaType = annotation.mediaType,
+                    description = annotation.description,
+                    holder = createExample(errorCode, annotation.summary, annotation.description)
+                )
+            }
 
-            return ExampleHolder.builder()
-                .httpStatus(errorCode.getHttpStatus().value())
-                .name(StringUtils.hasText(annotation.name()) ? annotation.name()
-                    : errorCode.getMessage())
-                .mediaType(annotation.mediaType())
-                .description(annotation.description())
-                .holder(createExample(errorCode, annotation.summary(), annotation.description()))
-                .build();
-        }
+            @Suppress("UNCHECKED_CAST")
+            private fun getErrorCode(annotation: ApiExceptionExplanation): BaseErrorCode {
+                val enumClass = annotation.value.java
+                val enumConstants = enumClass.enumConstants
+                return enumConstants.first { (it as Enum<*>).name == annotation.constant }
+            }
 
-        @SuppressWarnings("unchecked")
-        public static <E extends Enum<E> & BaseErrorCode> E getErrorCode(
-            ApiExceptionExplanation annotation) {
-            Class<E> enumClass = (Class<E>) annotation.value();
-            return Enum.valueOf(enumClass, annotation.constant());
-        }
+            private fun createExample(
+                errorCode: BaseErrorCode,
+                summary: String,
+                description: String
+            ): Example {
+                val response = ErrorResponseDTO(
+                    errorCode.code,
+                    errorCode.message
+                )
 
-        private static Example createExample(BaseErrorCode errorCode, String summary,
-            String description) {
-            ErrorResponseDTO response = new ErrorResponseDTO(
-                errorCode.getCode(),
-                errorCode.getMessage()
-            );
-
-            Example example = new Example();
-            example.setValue(response);
-            example.setSummary(summary);
-            example.setDescription(description);
-
-            return example;
+                return Example().apply {
+                    value = response
+                    setSummary(summary)
+                    setDescription(description)
+                }
+            }
         }
     }
 
-    private static void addExamplesToResponses(ApiResponses responses,
-        Map<Integer, List<ExampleHolder>> holders) {
-        holders.forEach((httpStatus, exampleHolders) -> {
-            Content content = new Content();
-            MediaType mediaType = new MediaType();
-            ApiResponse response = new ApiResponse();
+    private fun addExamplesToResponses(
+        responses: ApiResponses,
+        holders: Map<Int, List<ExampleHolder>>
+    ) {
+        holders.forEach { (httpStatus, exampleHolders) ->
+            val content = Content()
+            val mediaType = MediaType()
+            val response = io.swagger.v3.oas.models.responses.ApiResponse()
 
-            exampleHolders.forEach(holder -> mediaType.addExamples(holder.name(), holder.holder()));
-            content.addMediaType("application/json", mediaType);
-            response.setContent(content);
+            exampleHolders.forEach { holder ->
+                mediaType.addExamples(holder.name, holder.holder)
+            }
+            content.addMediaType("application/json", mediaType)
+            response.content = content
 
-            responses.addApiResponse(String.valueOf(httpStatus), response);
-        });
+            responses.addApiResponse(httpStatus.toString(), response)
+        }
     }
 }

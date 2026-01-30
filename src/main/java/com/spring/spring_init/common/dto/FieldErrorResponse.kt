@@ -1,22 +1,15 @@
-package com.spring.spring_init.common.dto;
+package com.spring.spring_init.common.dto
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.spring.spring_init.common.exception.CustomJsonView;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonView
+import com.spring.spring_init.common.exception.CustomJsonView
+import io.swagger.v3.oas.annotations.media.Schema
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class FieldErrorResponse {
-
+data class FieldErrorResponse(
     @Schema(name = "필드 이름")
-    @JsonView(CustomJsonView.Hidden.class)
-    private String filedName;
+    @JsonView(CustomJsonView.Hidden::class)
+    val filedName: String,
 
     @Schema(name = "필드 에러 이유")
-    @JsonView(CustomJsonView.Hidden.class)
-    private String reason;
-}
+    @JsonView(CustomJsonView.Hidden::class)
+    val reason: String
+)

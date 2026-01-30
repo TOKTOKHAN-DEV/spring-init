@@ -1,72 +1,63 @@
-package com.spring.spring_init.verify.repository;
+package com.spring.spring_init.verify.repository
 
-import com.spring.spring_init.common.security.jwt.TokenProvider;
-import com.spring.spring_init.verify.entity.EmailVerifier;
-import com.spring.spring_init.verify.entity.EmailVerifyPurpose;
-import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import com.spring.spring_init.common.security.jwt.TokenProvider
+import com.spring.spring_init.verify.entity.EmailVerifier
+import com.spring.spring_init.verify.entity.EmailVerifyPurpose
+import org.springframework.stereotype.Repository
+import java.util.*
 
 @Repository
-@RequiredArgsConstructor
-public class EmailVerifyRepositoryImpl implements EmailVerifyRepository {
+class EmailVerifyRepositoryImpl(
+    private val emailVerifyJpaRepository: EmailVerifyJpaRepository,
+    private val tokenProvider: TokenProvider
+) : EmailVerifyRepository {
 
-    private final EmailVerifyJpaRepository emailVerifyJpaRepository;
-    private final TokenProvider tokenProvider;
-
-
-    @Override
-    public EmailVerifier save(final EmailVerifier emailVerifier) {
-        return emailVerifyJpaRepository.save(emailVerifier);
+    override fun save(emailVerifier: EmailVerifier): EmailVerifier {
+        return emailVerifyJpaRepository.save(emailVerifier)
     }
 
-    @Override
-    public Optional<EmailVerifier> findByEmailAndCodeAndPurposeOrderByCreatedAtDesc(
-        final String email,
-        final String code,
-        final EmailVerifyPurpose emailVerifyPurpose
-    ) {
+    override fun findByEmailAndCodeAndPurposeOrderByCreatedAtDesc(
+        email: String,
+        code: String,
+        emailVerifyPurpose: EmailVerifyPurpose
+    ): Optional<EmailVerifier> {
         return emailVerifyJpaRepository.findByEmailAndCodeAndPurposeOrderByCreatedAtDesc(
             email,
             code,
             emailVerifyPurpose
-        );
+        )
     }
 
-    @Override
-    public Optional<EmailVerifier> findByEmailAndToken(
-        final String email,
-        final String emailToken
-    ) {
-        return emailVerifyJpaRepository.findByEmailAndToken(email, emailToken);
+    override fun findByEmailAndToken(
+        email: String,
+        emailToken: String
+    ): Optional<EmailVerifier> {
+        return emailVerifyJpaRepository.findByEmailAndToken(email, emailToken)
     }
 
-    @Override
-    public void deleteByEmailAndPurpose(String email, EmailVerifyPurpose emailVerifyPurpose) {
-        emailVerifyJpaRepository.deleteByEmailAndPurpose(email, emailVerifyPurpose);
+    override fun deleteByEmailAndPurpose(email: String, emailVerifyPurpose: EmailVerifyPurpose) {
+        emailVerifyJpaRepository.deleteByEmailAndPurpose(email, emailVerifyPurpose)
     }
 
-    @Override
-    public Optional<EmailVerifier> findByEmailAndTokenAndPurpose(
-        final String email,
-        final String token,
-        final EmailVerifyPurpose emailVerifyPurpose
-    ) {
+    override fun findByEmailAndTokenAndPurpose(
+        email: String,
+        token: String,
+        emailVerifyPurpose: EmailVerifyPurpose
+    ): Optional<EmailVerifier> {
         return emailVerifyJpaRepository.findByEmailAndTokenAndPurpose(
             email,
             token,
             emailVerifyPurpose
-        );
+        )
     }
 
-    @Override
-    public Optional<EmailVerifier> findFirstByEmailAndPurposeOrderByCreatedAtDesc(
-        final String email,
-        final EmailVerifyPurpose purpose
-    ) {
+    override fun findFirstByEmailAndPurposeOrderByCreatedAtDesc(
+        email: String,
+        purpose: EmailVerifyPurpose
+    ): Optional<EmailVerifier> {
         return emailVerifyJpaRepository.findFirstByEmailAndPurposeOrderByCreatedAtDesc(
             email,
             purpose
-        );
+        )
     }
 }

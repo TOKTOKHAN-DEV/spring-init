@@ -1,22 +1,17 @@
-package com.spring.spring_init.user.dto.response;
+package com.spring.spring_init.user.dto.response
 
-import com.spring.spring_init.user.entity.User;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.spring.spring_init.user.entity.User
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserInfoResponseDto {
-
-    private Long id;
-    private String penName;
-    private String email;
-    private String paymentDate;
-
-    public UserInfoResponseDto(User user) {
-        this.id = user.getUserId();
-        this.email = user.getEmail();
-    }
+data class UserInfoResponseDto(
+    val id: Long?,
+    val penName: String?,
+    val email: String?,
+    val paymentDate: String?
+) {
+    constructor(user: User) : this(
+        id = user.userId,
+        penName = null,
+        email = user.email,
+        paymentDate = null
+    )
 }

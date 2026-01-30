@@ -1,16 +1,17 @@
-package com.spring.spring_init.common.dto;
+package com.spring.spring_init.common.dto
 
-import java.util.List;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Page
 
-public record PageResponseDTO<T>(
-    List<T> content,
-    int page,
-    int size,
-    long totalElements
+data class PageResponseDTO<T>(
+    val content: List<T>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Long
 ) {
-
-    public PageResponseDTO(Page<T> page) {
-        this(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements());
-    }
+    constructor(page: Page<T>) : this(
+        content = page.content,
+        page = page.number,
+        size = page.size,
+        totalElements = page.totalElements
+    )
 }

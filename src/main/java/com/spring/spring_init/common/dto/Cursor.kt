@@ -1,31 +1,21 @@
-package com.spring.spring_init.common.dto;
+package com.spring.spring_init.common.dto
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Cursor<T> {
-
+data class Cursor<T>(
     @Schema(
         requiredMode = RequiredMode.REQUIRED,
         description = "cursor / 다음 요청의 cursor",
         nullable = true
     )
-    private String cursor;
+    val cursor: String?,
 
     @Schema(
         requiredMode = RequiredMode.REQUIRED,
         description = "다음 데이터 존재 여부"
     )
-    private Boolean hasNext;
+    val hasNext: Boolean,
 
-    private List<T> data;
-}
+    val data: List<T>
+)

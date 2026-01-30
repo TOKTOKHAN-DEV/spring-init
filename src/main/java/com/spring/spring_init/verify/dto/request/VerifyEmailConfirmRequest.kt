@@ -1,19 +1,14 @@
-package com.spring.spring_init.verify.dto.request;
+package com.spring.spring_init.verify.dto.request
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
 
-@Getter
-@NoArgsConstructor
-public class VerifyEmailConfirmRequest {
-
-    @NotNull(message = "email 필수 값 입니다")
+data class VerifyEmailConfirmRequest(
+    @field:NotNull(message = "email 필수 값 입니다")
     @Schema(description = "이메일")
-    private String email;
+    val email: String,
 
-    @NotNull(message = "code 필수 값 입니다")
+    @field:NotNull(message = "code 필수 값 입니다")
     @Schema(description = "이메일 인증 코드")
-    private String code;
-}
+    val code: String
+)

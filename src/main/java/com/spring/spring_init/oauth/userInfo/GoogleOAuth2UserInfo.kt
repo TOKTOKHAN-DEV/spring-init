@@ -1,20 +1,14 @@
-package com.spring.spring_init.oauth.userInfo;
+package com.spring.spring_init.oauth.userInfo
 
-import java.util.Map;
+class GoogleOAuth2UserInfo(
+    attributes: Map<String, Any>
+) : OAuth2UserInfo(attributes) {
 
-public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
-
-    public GoogleOAuth2UserInfo(Map<String, Object> attributes) {
-        super(attributes);
+    override fun getId(): String {
+        return attributes["sub"].toString()
     }
 
-    @Override
-    public String getId() {
-        return attributes.get("sub").toString();
-    }
-
-    @Override
-    public String getEmail() {
-        return attributes.get("email").toString();
+    override fun getEmail(): String {
+        return attributes["email"].toString()
     }
 }

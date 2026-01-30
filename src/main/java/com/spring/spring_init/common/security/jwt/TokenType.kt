@@ -1,8 +1,6 @@
-package com.spring.spring_init.common.security.jwt;
+package com.spring.spring_init.common.security.jwt
 
-public enum TokenType {
+enum class TokenType {
     ACCESS,
-    REFRESH;
-
-    private String type;
+    REFRESH
 }

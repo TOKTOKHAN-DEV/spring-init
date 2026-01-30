@@ -1,57 +1,40 @@
-package com.spring.spring_init.oauth;
+package com.spring.spring_init.oauth
 
-import com.spring.spring_init.user.entity.User;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import com.spring.spring_init.user.entity.User
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.oauth2.core.user.OAuth2User
 
-public class PrincipalDetailsImpl implements UserDetails, OAuth2User {
+class PrincipalDetailsImpl : UserDetails, OAuth2User {
 
-    private User user;
-    private Map<String, Object> attributes;
-
+    @JvmField
+    val user: User
+    private val attributes: Map<String, Any>?
 
     // 일반 로그인
-    public PrincipalDetailsImpl(User user) {
-        this.user = user;
+    constructor(user: User) {
+        this.user = user
+        this.attributes = null
     }
 
     // oauth 로그인
-    public PrincipalDetailsImpl(User user, Map<String, Object> attributes) {
-        this.user = user;
-        this.attributes = attributes;
+    constructor(user: User, attributes: Map<String, Any>) {
+        this.user = user
+        this.attributes = attributes
     }
 
-    public User getUser() {
-        return user;
+    fun getUser(): User = user
+
+    override fun getName(): String = user.email
+
+    override fun getAttributes(): Map<String, Any>? = attributes
+
+    override fun getAuthorities(): Collection<GrantedAuthority> {
+        return listOf(SimpleGrantedAuthority(user.userRole.name))
     }
 
-    @Override
-    public String getName() {
-        return user.getEmail();
-    }
+    override fun getPassword(): String = user.password
 
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attributes;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getUserRole().name()));
-    }
-
-    @Override
-    public String getPassword() {
-        return user.getPassword();
-    }
-
-    @Override
-    public String getUsername() {
-        return user.getEmail();
-    }
+    override fun getUsername(): String = user.email
 }

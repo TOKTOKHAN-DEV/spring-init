@@ -1,27 +1,15 @@
-package com.spring.spring_init.common.exception;
+package com.spring.spring_init.common.exception
 
-import com.spring.spring_init.common.base.BaseErrorCode;
-import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import com.spring.spring_init.common.base.BaseErrorCode
+import org.springframework.http.HttpStatus
 
-@Getter
-public enum CommonExceptionCode implements BaseErrorCode {
+enum class CommonExceptionCode(
+    private val httpStatusCode: HttpStatus,
+    override val code: String,
+    override val message: String
+) : BaseErrorCode {
     FIELD_ERROR(HttpStatus.BAD_REQUEST, "FIELD_ERROR", "Field error");
 
-    private final HttpStatus httpStatusCode;
-
-    private final String code;
-
-    private final String message;
-
-    CommonExceptionCode(HttpStatus httpStatusCode, String code, String message) {
-        this.httpStatusCode = httpStatusCode;
-        this.code = code;
-        this.message = message;
-    }
-
-    @Override
-    public HttpStatus getHttpStatus() {
-        return httpStatusCode;
-    }
+    override val httpStatus: HttpStatus
+        get() = httpStatusCode
 }

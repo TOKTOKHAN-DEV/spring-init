@@ -1,5 +1,5 @@
-package com.spring.spring_init.oauth;
+package com.spring.spring_init.oauth
 
-public enum OAuthProvider {
+enum class OAuthProvider {
     GOOGLE, KAKAO, NAVER
 }

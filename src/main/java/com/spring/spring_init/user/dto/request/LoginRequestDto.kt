@@ -1,22 +1,14 @@
-package com.spring.spring_init.user.dto.request;
+package com.spring.spring_init.user.dto.request
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginRequestDto {
-
+data class LoginRequestDto(
     @Schema(name = "email", description = "아이디")
-    @NotNull(message = "email 필수 값 입니다.")
-    private String email;
-
+    @field:NotNull(message = "email 필수 값 입니다.")
+    val email: String,
 
     @Schema(name = "password", description = "비밀번호")
-    @NotNull(message = "password 필수 값 입니다.")
-    private String password;
-}
+    @field:NotNull(message = "password 필수 값 입니다.")
+    val password: String
+)

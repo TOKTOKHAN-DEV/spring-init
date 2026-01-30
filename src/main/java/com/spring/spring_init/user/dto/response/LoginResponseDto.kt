@@ -1,20 +1,13 @@
-package com.spring.spring_init.user.dto.response;
+package com.spring.spring_init.user.dto.response
 
-import com.spring.spring_init.common.security.jwt.TokenResponseDto;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.spring.spring_init.common.security.jwt.TokenResponseDto
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginResponseDto {
-
-    private String accessToken;
-    private String refreshToken;
-
-    public LoginResponseDto(TokenResponseDto tokenResponseDto) {
-        this.accessToken = tokenResponseDto.getAccessToken();
-        this.refreshToken = tokenResponseDto.getRefreshToken();
-    }
+data class LoginResponseDto(
+    val accessToken: String,
+    val refreshToken: String
+) {
+    constructor(tokenResponseDto: TokenResponseDto) : this(
+        accessToken = tokenResponseDto.accessToken,
+        refreshToken = tokenResponseDto.refreshToken
+    )
 }

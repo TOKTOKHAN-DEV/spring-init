@@ -1,53 +1,39 @@
-package com.spring.spring_init.verify.entity;
+package com.spring.spring_init.verify.entity
 
-import com.spring.spring_init.common.base.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+import com.spring.spring_init.common.base.BaseEntity
+import jakarta.persistence.*
 
 @Entity(name = "email_verifier")
-public class EmailVerifier extends BaseEntity {
-
+class EmailVerifier(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "email_verifier_id", nullable = false)
-    private Long emailVerifierId;
+    var emailVerifierId: Long? = null,
 
     @Column(name = "email", nullable = false)
-    private String email;
+    var email: String,
 
     @Column(name = "code")
-    private String code;
+    var code: String?,
 
     @Column(name = "token", nullable = false)
-    private String token;
+    var token: String,
 
     @Column(name = "purpose")
     @Enumerated(EnumType.STRING)
-    private EmailVerifyPurpose purpose;
+    var purpose: EmailVerifyPurpose?
+) : BaseEntity() {
 
-    public EmailVerifier(
-        final String email,
-        final String code,
-        final String token,
-        final EmailVerifyPurpose purpose
-    ) {
-        this.email = email;
-        this.code = code;
-        this.token = token;
-        this.purpose = purpose;
-    }
+    constructor(
+        email: String,
+        code: String?,
+        token: String,
+        purpose: EmailVerifyPurpose
+    ) : this(
+        emailVerifierId = null,
+        email = email,
+        code = code,
+        token = token,
+        purpose = purpose
+    )
 }
