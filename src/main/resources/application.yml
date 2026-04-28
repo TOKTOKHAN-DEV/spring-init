@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: {projectName}
+  profiles:
+    active: local
