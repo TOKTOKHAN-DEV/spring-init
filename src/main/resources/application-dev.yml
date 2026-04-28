@@ -1,0 +1,103 @@
+app:
+  env: dev
+
+spring:
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+  config:
+    import:
+      - aws-secretsmanager:{projectName}/dev/db
+      - aws-secretsmanager:{projectName}/dev/secrets
+      - aws-secretsmanager:{projectName}/dev/jwt
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${host}:${port}/${dbname}
+    username: ${username}
+    password: ${password}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 500
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  jackson:
+    serialization:
+      write-enums-using-to-string: true
+    deserialization:
+      read-enums-using-to-string: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger
+    tags-sorter: alpha
+    operations-sorter: method
+    disable-swagger-default-url: false
+  default-produces-media-type: application/json
+  group-configs:
+    - group: internal
+      paths-to-match: /v1/internal/**
+      display-name: Internal API
+    - group: admin
+      paths-to-match: /v1/admin/**
+      display-name: Admin API
+    - group: user
+      paths-to-match: /v1/**
+      paths-to-exclude:
+        - /v1/admin/**
+        - /v1/internal/**
+      display-name: User API
+  api-docs:
+    enabled: true
+    servers: []
+
+jwt:
+  header: Authorization
+  secret: ${jwt-secret}
+  access-token-validity-in-milliseconds: 604800000
+  refresh-token-validity-in-milliseconds: 7776000000
+  algorithm: HS256
+
+google:
+  oauth:
+    client-id: ${google-client-id}
+
+apple:
+  oauth:
+    client-id: ${apple-client-id}
+
+aws:
+  region:
+    static: ap-northeast-2
+  s3:
+    bucket: "{projectName}-dev-bucket"
+    bucket-full-path: "https://${aws.s3.bucket}.s3.amazonaws.com/_media"
+    bucket-path: "https://${aws.s3.bucket}.s3.ap-northeast-2.amazonaws.com/"
+
+api-key:
+  secret-key: ${api-key}
+
+logging:
+  filter:
+    exclude-paths:
+      - /health
+      - /swagger-ui
+      - /v3/api-docs
+      - /webjars
+      - /favicon.ico
+
+cors:
+  allowed-origins:
+    - http://localhost:3000
+
+api:
+  validation:
+    internal-path: /v1/internal/
