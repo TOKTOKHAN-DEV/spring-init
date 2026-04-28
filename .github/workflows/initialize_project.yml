@@ -21,6 +21,9 @@ jobs:
           sed -i "s|spring_init|${PROJECT_NAME}|g" settings.gradle
           sed -i "s|spring_init|${PROJECT_NAME}|g" build.gradle
           sed -i "s|#{PROJECT_NAME}|${PROJECT_NAME}|g" README.md
+          sed -i "s|{projectName}|${PROJECT_NAME}|g" src/main/resources/application-local.yml
+          sed -i "s|{projectName}|${PROJECT_NAME}|g" src/main/resources/application-dev.yml
+          sed -i "s|{projectName}|${PROJECT_NAME}|g" src/main/resources/application-prod.yml
 
       - name: Commit
         run: |
