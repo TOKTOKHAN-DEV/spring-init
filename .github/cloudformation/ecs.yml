@@ -16,16 +16,32 @@ Conditions:
   IsProd: !Equals [!Ref ENV, 'prod']
 
 Resources:
-  # Secret Manager
-  Secret:
+  # Secrets Manager — 도메인별 분리
+  AppSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '${ProjectName}/${ENV}/spring'
+      Name: !Sub '${ProjectName}/${ENV}/secrets'
       GenerateSecretString:
-        SecretStringTemplate: !Sub '{}'
-        GenerateStringKey: 'key'
+        SecretStringTemplate: '{"google-client-id":"REPLACE_ME","apple-client-id":"REPLACE_ME"}'
+        GenerateStringKey: 'api-key'
         PasswordLength: 50
         ExcludeCharacters: '"@/\&;='
+
+  JwtSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ProjectName}/${ENV}/jwt'
+      GenerateSecretString:
+        SecretStringTemplate: '{}'
+        GenerateStringKey: 'jwt-secret'
+        PasswordLength: 64
+        ExcludeCharacters: '"@/\&;='
+
+  FirebaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ProjectName}/${ENV}/firebase'
+      SecretString: '{"type":"service_account","project_id":"REPLACE_ME","private_key_id":"REPLACE_ME","private_key":"REPLACE_ME","client_email":"REPLACE_ME","client_id":"REPLACE_ME"}'
   # ECS Cluster
   Cluster:
     Type: AWS::ECS::Cluster
@@ -317,7 +333,7 @@ Resources:
       AuthParameters:
         ApiKeyAuthParameters:
           ApiKeyName: x-api-key
-          ApiKeyValue: !Join [ '', [ '{{resolve:secretsmanager:', !Ref Secret, ':SecretString:key}}' ] ]
+          ApiKeyValue: !Join [ '', [ '{{resolve:secretsmanager:', !Ref AppSecrets, ':SecretString:api-key}}' ] ]
   RuleApiDestination:
     Type: AWS::Events::ApiDestination
     DependsOn: RuleConnection
