@@ -42,6 +42,7 @@ Resources:
     Properties:
       Name: !Sub '${ProjectName}/${ENV}/firebase'
       SecretString: '{"type":"service_account","project_id":"REPLACE_ME","private_key_id":"REPLACE_ME","private_key":"REPLACE_ME","client_email":"REPLACE_ME","client_id":"REPLACE_ME"}'
+
   # ECS Cluster
   Cluster:
     Type: AWS::ECS::Cluster
@@ -350,6 +351,6 @@ Resources:
 #    Export:
 #      Name: !Sub '${ProjectName}-${ENV}-ALBDNSName'
 #  APIKey:
-#    value: !Join [ '', [ '{{resolve:secretsmanager:', !Ref Secret, ':SecretString:key}}' ] ]
+#    value: !Join [ '', [ '{{resolve:secretsmanager:', !Ref AppSecrets, ':SecretString:api-key}}' ] ]
 #    Export:
 #      Name: !Sub '${ProjectName}-${ENV}-APIKey'
