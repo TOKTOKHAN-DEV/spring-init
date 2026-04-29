@@ -50,6 +50,10 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 //    runtimeOnly 'com.h2database:h2' // 개발 간 내장 DB 사용하기 위함
 
+    //Flyway (DB 스키마 마이그레이션). PostgreSQL 모듈은 Flyway 10+에서 별도 의존성.
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+
     //ORM
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
