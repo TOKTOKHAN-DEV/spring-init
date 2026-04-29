@@ -17,7 +17,7 @@ throw new CommonException(
 );
 ```
 
-코드베이스 전체 22 콜사이트가 동일한 보일러플레이트(`enum.getCode()` + `enum.getMessage()`)를 반복하고 있음.
+코드베이스 전체 23 콜사이트가 동일한 보일러플레이트(`enum.getCode()` + `enum.getMessage()`)를 반복하고 있음.
 
 ### 목표 패턴
 
@@ -147,11 +147,11 @@ public enum AuthExceptionCode implements BaseErrorCode {
 | 파일 | 콜사이트 수 |
 |---|---|
 | `user/service/UserService.java` | 11 |
-| `verify/service/EmailVerifyService.java` | 7 |
+| `verify/service/EmailVerifyService.java` | 8 |
 | `verify/service/VerifyService.java` | 2 |
 | `common/security/user/UserDetailsServiceImpl.java` | 1 |
 | `common/aws/service/FileService.java` | 1 |
-| **합계** | **22** |
+| **합계** | **23** |
 
 ### 4.2 변환 규칙
 
@@ -206,7 +206,7 @@ new CommonException(X)
 1. **`AuthExceptionCode`에 `BaseErrorCode` 구현 추가**
    - 무중단. 단독 커밋.
 
-2. **`CommonException` 시그니처 교체 + 22 콜사이트 일괄 치환 (단일 커밋)**
+2. **`CommonException` 시그니처 교체 + 23 콜사이트 일괄 치환 (단일 커밋)**
    - 신규 생성자 추가, 구 생성자 제거.
    - 콜사이트 5개 파일 22곳 치환.
    - 한 커밋 안에서 완료해야 빌드가 항상 통과.
@@ -222,7 +222,7 @@ new CommonException(X)
 | 위험 | 완화 |
 |---|---|
 | `NOT_FOUND_USER` 응답코드 변경(400→404)이 클라이언트 영향 | PR description에 breaking change 명시. 변경 매핑 표 첨부. |
-| 22 콜사이트 누락 | 구 생성자 제거 → 컴파일러가 강제 검출. |
+| 23 콜사이트 누락 | 구 생성자 제거 → 컴파일러가 강제 검출. |
 | 빌드 깨진 중간 상태 커밋 | 시그니처 변경 + 콜사이트 치환을 한 커밋에 묶음. |
 
 ---
@@ -231,7 +231,7 @@ new CommonException(X)
 
 테스트 추가는 본 PR 범위에서 제외. 검증은 다음으로 한정:
 
-- `./gradlew build` 통과 — 22 콜사이트 마이그레이션 완전성 보장.
+- `./gradlew build` 통과 — 23 콜사이트 마이그레이션 완전성 보장.
 - 핵심 시나리오 수동 확인 (선택):
   - `GET /users/{id}` with non-existent id → 404 + `{"errorCode":"NOT_FOUND_USER", ...}`
   - 회원가입 시 중복 이메일 → 400 + `{"errorCode":"EXIST_EMAIL", ...}`
