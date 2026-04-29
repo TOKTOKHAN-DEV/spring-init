@@ -17,7 +17,7 @@ public class CommonExceptionHandler implements CommonExceptionHandlerApi {
     @JsonView(Common.class)
     @ExceptionHandler(value = CommonException.class)
     public ResponseEntity<ErrorResponseDTO> commonExceptionHandler(CommonException e) {
-        return ResponseEntity.badRequest()
+        return ResponseEntity.status(e.getErrorCode().getHttpStatus())
             .body(
                 new ErrorResponseDTO(
                     e.getCode(),

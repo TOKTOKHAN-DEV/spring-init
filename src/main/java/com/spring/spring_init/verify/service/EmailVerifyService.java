@@ -70,17 +70,9 @@ public class EmailVerifyService {
                 request.getEmail(),
                 request.getCode(),
                 EmailVerifyPurpose.EMAIL_VALIDATION
-            ).orElseThrow(() ->
-                new CommonException(
-                    EmailVerifyExceptionCode.NOT_MATCH_CODE.getCode(),
-                    EmailVerifyExceptionCode.NOT_MATCH_CODE.getMessage()
-                )
-            );
+            ).orElseThrow(() -> new CommonException(EmailVerifyExceptionCode.NOT_MATCH_CODE));
         if (isOverValidationTimeLimit(findedEmailVerifier.getCreatedAt())) {
-            throw new CommonException(
-                EmailVerifyExceptionCode.TIME_OVER.getCode(),
-                EmailVerifyExceptionCode.TIME_OVER.getMessage()
-            );
+            throw new CommonException(EmailVerifyExceptionCode.TIME_OVER);
         }
         return new VerifyEmailConfirmResponse(findedEmailVerifier.getToken());
     }
@@ -91,12 +83,8 @@ public class EmailVerifyService {
     public void verifyPasswordReset(final VerifyPasswordResetRequest request) {
         Long userId = emailTokenGenerator.decodeUidByUserId(request.getUid());
 
-        User user = userRepository.findById(userId).orElseThrow(() ->
-            new CommonException(
-                UserExceptionCode.NOT_FOUND_USER.getCode(),
-                UserExceptionCode.NOT_FOUND_USER.getMessage()
-            )
-        );
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CommonException(UserExceptionCode.NOT_FOUND_USER));
 
         //Token 검증
         EmailVerifier emailVerifier =
@@ -104,38 +92,22 @@ public class EmailVerifyService {
                 user.getEmail(),
                 request.getToken(),
                 EmailVerifyPurpose.RESET_PASSWORD
-            ).orElseThrow(() ->
-                new CommonException(
-                    EmailVerifyExceptionCode.INVALID_TOKEN.getCode(),
-                    EmailVerifyExceptionCode.INVALID_TOKEN.getMessage()
-                )
-            );
+            ).orElseThrow(() -> new CommonException(EmailVerifyExceptionCode.INVALID_TOKEN));
 
         //마지막 토큰인지 검증
         EmailVerifier firstByEmailAndPurpose =
             emailVerifyRepository.findFirstByEmailAndPurposeOrderByCreatedAtDesc(
                 user.getEmail(),
                 EmailVerifyPurpose.RESET_PASSWORD
-            ).orElseThrow(() ->
-                new CommonException(
-                    EmailVerifyExceptionCode.INVALID_TOKEN.getCode(),
-                    EmailVerifyExceptionCode.INVALID_TOKEN.getMessage()
-                )
-            );
+            ).orElseThrow(() -> new CommonException(EmailVerifyExceptionCode.INVALID_TOKEN));
 
         if (!emailVerifier.equals(firstByEmailAndPurpose)) {
-            throw new CommonException(
-                EmailVerifyExceptionCode.INVALID_TOKEN.getCode(),
-                EmailVerifyExceptionCode.INVALID_TOKEN.getMessage()
-            );
+            throw new CommonException(EmailVerifyExceptionCode.INVALID_TOKEN);
         }
 
         //인증 시간 검증
         if (isOverValidationTimeLimit(firstByEmailAndPurpose.getCreatedAt())) {
-            throw new CommonException(
-                EmailVerifyExceptionCode.TIME_OVER.getCode(),
-                EmailVerifyExceptionCode.TIME_OVER.getMessage()
-            );
+            throw new CommonException(EmailVerifyExceptionCode.TIME_OVER);
         }
     }
 
@@ -147,10 +119,7 @@ public class EmailVerifyService {
     //중복된 이메일인지 검증(회원정보에 존해자는 이메일 일 시 예외 반환)
     private void checkIfEmailExists(final String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
-            throw new CommonException(
-                UserExceptionCode.EXIST_EMAIL.getCode(),
-                UserExceptionCode.EXIST_EMAIL.getMessage()
-            );
+            throw new CommonException(UserExceptionCode.EXIST_EMAIL);
         });
     }
 }

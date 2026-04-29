@@ -110,10 +110,7 @@ public class FileService {
             return new PresignedResponseDto(presignedUrl, fields);
             
         } catch (Exception e) {
-            throw new CommonException(
-                FileExceptionCode.FAIL_UPLOAD_FILE.getCode(),
-                FileExceptionCode.FAIL_UPLOAD_FILE.getMessage()
-            );
+            throw new CommonException(FileExceptionCode.FAIL_UPLOAD_FILE);
         }
     }
 }
