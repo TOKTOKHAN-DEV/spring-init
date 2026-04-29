@@ -2,6 +2,14 @@
 
 이 문서는 spring-init 템플릿으로 시작한 프로젝트의 부트스트랩, 개발자 합류, 컨벤션, 배포, 트러블슈팅을 다룬다.
 
+> ⚠️ **상태 안내**: 본 문서는 [PR #2 (`feat/secrets-manager-cicd`)](https://github.com/TOKTOKHAN-DEV/spring-init/pull/2) 가 머지된 **이후 최종 상태**를 기준으로 작성되었다. PR #2 머지 전엔 다음 항목이 현재 main과 다르다:
+> - **시크릿 구조**: 현재 main은 단일 `<project>/<env>/spring` (api-key 한 키만) + RDS의 `<project>/<env>/db`. PR #2 머지 후 `<project>/<env>/secrets` / `<project>/<env>/jwt` / `<project>/<env>/firebase` 분리.
+> - **CI/CD**: 현재 main은 `APPLICATION_DEV_YML` GitHub Secret으로 yml을 CI에서 주입. PR #2 머지 후 yml이 git에 직접 커밋되고 SM에서 시크릿 로딩.
+> - **AWS 인증**: 현재 main의 `S3Config`/`SesConfig`는 정적 키. PR #2 머지 후 `DefaultCredentialsProvider`(Task Role).
+> - **Spring 프로파일**: 현재 main에 `application-{dev,prod,local}.yml`이 git에 없음. PR #2 머지 후 추가.
+>
+> 본 PR은 PR #2 머지 후에 rebase·머지하는 것을 전제로 한다. 그 전까지는 Part A.5 / D.3 / E.3-E.4 등이 현재 main과 불일치할 수 있다.
+
 ## 0. 이 문서 사용법
 
 - **새 프로젝트 시작** (테크 리드, 1회성) → [Part A. 새 프로젝트 부트스트랩](#part-a-새-프로젝트-부트스트랩-1회성)
@@ -23,7 +31,7 @@
 | Build | Gradle 8.10 (wrapper) |
 | Database | PostgreSQL 16 |
 | ORM | Spring Data JPA + QueryDSL 5.0 |
-| Migration | Flyway |
+| Migration | Flyway (PR #2 yml에 활성, 의존성은 별도 추가 필요) |
 | API Docs | springdoc-openapi 2.5 (Swagger UI) |
 | Auth | Spring Security + JWT (jjwt 0.11) |
 | Cloud | AWS (ECS Fargate, ALB, RDS, S3, SES, Secrets Manager, EventBridge) |
@@ -55,7 +63,7 @@
 
 - **AWS SDK v2**: `software.amazon.awssdk:s3`, `secretsmanager`, `ses`
 - **Spring Cloud AWS**: `io.awspring.cloud:spring-cloud-aws-starter-secrets-manager` (Spring `spring.config.import`로 SM 직접 로딩)
-- **JPA + QueryDSL**: 동적 쿼리는 QueryDSL, 정적 쿼리는 Spring Data JPA
+- **JPA + QueryDSL**: 동적 쿼리는 QueryDSL, 정적 쿼리는 Spring Data JPA. (build.gradle에 MyBatis가 함께 포함되어 있으나 활성 ORM은 JPA + QueryDSL.)
 - **Lombok**: 반드시 IDE 플러그인 설치 (없으면 컴파일 에러)
 
 ---
@@ -331,7 +339,7 @@ com.spring.<projectName>/
 │   ├── dto/                          # ResponseDTO, ErrorResponseDTO, PageResponseDTO, Cursor
 │   ├── exception/                    # CommonException, CommonExceptionHandler
 │   ├── healtcheck/                   # /health 엔드포인트
-│   ├── persistence/                  # JpaConfig, QueryConfig
+│   ├── persistence/config/           # JpaConfig, QueryConfig
 │   ├── security/                     # SecurityConfig, JwtTokenFilter, TokenProvider
 │   └── utils/                        # ObjectUtils 등
 ├── user/                             # 도메인 (예시)
@@ -393,7 +401,7 @@ public interface BaseErrorCode {
 ```java
 @Getter
 public enum UserExceptionCode implements BaseErrorCode {
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다");
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "NOT_FOUND_USER", "회원을 찾을 수 없습니다");
 
     private final HttpStatus httpStatusCode;
     private final String code;
@@ -406,8 +414,8 @@ public enum UserExceptionCode implements BaseErrorCode {
 
 서비스 레이어에서:
 ```java
-throw new CommonException(UserExceptionCode.USER_NOT_FOUND.getCode(),
-                          UserExceptionCode.USER_NOT_FOUND.getMessage());
+throw new CommonException(UserExceptionCode.NOT_FOUND_USER.getCode(),
+                          UserExceptionCode.NOT_FOUND_USER.getMessage());
 ```
 
 #### 전역 핸들러
@@ -438,7 +446,7 @@ return ResponseEntity.ok(response);
 
 ```json
 {
-  "errorCode": "USER_NOT_FOUND",
+  "errorCode": "NOT_FOUND_USER",
   "message": "사용자를 찾을 수 없습니다",
   "fieldErrors": null
 }
@@ -458,7 +466,7 @@ return ResponseEntity.ok(response);
 `JwtTokenFilter`가 매 요청마다 Authorization 헤더 검사.
 
 만료 시간:
-- Access Token: 7일 (yml `jwt.access-token-validity-in-milliseconds`)
+- Access Token: yml `jwt.token-validity-in-milliseconds` (TokenProvider 참조)
 - Refresh Token: 90일
 
 OAuth2 (Google/Apple/Kakao/Naver)는 `oauth/` 패키지에서 처리. `SocialAuthRequestDto`로 클라이언트가 social provider id token을 보내면 백엔드가 검증·로컬 사용자와 매핑.
