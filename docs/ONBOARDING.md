@@ -648,3 +648,132 @@ ECS Console → Cluster → Service → Events 탭. 배포 실패, 헬스체크 
 #### ALB Target Group Health
 
 EC2 Console → Target Groups → `<project>-<env>-tg-8080`. Healthy/Unhealthy 카운트 + 사유.
+
+---
+
+## Part E. 트러블슈팅
+
+### E.1 로컬 부팅 실패: AWS_PROFILE 미설정
+
+**증상:**
+```
+software.amazon.awssdk.services.secretsmanager.model.SecretsManagerException:
+The security token included in the request is invalid
+```
+또는
+```
+Could not resolve placeholder 'jwt-secret' in value "${jwt-secret}"
+```
+
+**원인:** `AWS_PROFILE` 환경변수가 없거나, `~/.aws/credentials`의 `[default]` 프로필이 다른 회사 자격증명.
+
+**해결:**
+- 셸: `export AWS_PROFILE=<프로젝트명>-dev`
+- IDE: Run Configuration → Environment variables → `AWS_PROFILE=<프로젝트명>-dev`
+
+### E.2 SM 시크릿 lookup 실패
+
+**증상:**
+```
+ResourceNotFoundException: Secrets Manager can't find the specified secret.
+```
+
+**원인:**
+- 시크릿 이름 오타 (`<project>/<env>/secrets`가 정확한지)
+- 해당 환경 인프라가 아직 부트스트랩 안 됨 → A.4 참조
+- IAM 권한 부족
+
+**해결:**
+1. AWS Console → Secrets Manager에서 시크릿 존재 확인
+2. `application-<env>.yml`의 `spring.config.import` 경로와 실제 시크릿 이름 비교
+3. IAM User/Role에 `secretsmanager:GetSecretValue` 권한 확인
+
+**증상:**
+```
+AccessDeniedException: User: ... is not authorized to perform: secretsmanager:GetSecretValue
+```
+
+**해결:** 로컬이면 IAM User 정책 보강. ECS면 `cloudformation/ecs.yml`의 `TaskRole`이 `secretsmanager:*` 권한 있는지 확인.
+
+### E.3 CI 빌드 실패: application yml 누락
+
+**증상:**
+```
+Could not resolve placeholder 'host' in value "jdbc:postgresql://${host}:${port}/${dbname}"
+```
+빌드는 되지만 부팅이 안 됨.
+
+**원인:** `application*.yml` 파일이 git에 트래킹되지 않아 CI 체크아웃에 누락.
+
+**해결:** `.gitignore` 9행 부근의 negate 규칙 확인:
+```
+*.yml
+!**/src/main/resources/application*.yml
+```
+
+`git ls-files src/main/resources/`에 `application.yml`, `application-dev.yml`, `application-prod.yml`, `application-local.yml` 모두 보여야 한다.
+
+### E.4 ECS task 부팅 실패: SM placeholder 잔존
+
+**증상 (CloudWatch):**
+```
+Could not resolve placeholder 'google-client-id' in value "${google-client-id}"
+```
+또는 `REPLACE_ME` 값이 코드에 그대로 들어가 OAuth 동작 안 함.
+
+**원인:** CloudFormation이 시크릿을 만들 때 placeholder(REPLACE_ME)로 시작했고, 운영자가 실제 값을 입력하지 않음.
+
+**해결:**
+1. AWS Console → Secrets Manager → `<project>/<env>/secrets` → 값 확인
+2. `REPLACE_ME` 들어 있으면 실제 값으로 갱신
+3. ECS Service → Force new deployment
+
+### E.5 DB 연결 실패
+
+**증상:**
+```
+org.postgresql.util.PSQLException: Connection refused
+```
+또는
+```
+FATAL: password authentication failed for user "..."
+```
+
+**원인:**
+- RDS 보안그룹이 ECS 보안그룹의 5432 inbound 막음
+- `<project>/<env>/db` 시크릿이 RDS와 attached 상태가 풀려 password 불일치
+- RDS 인스턴스가 정지/삭제된 상태
+
+**해결:**
+1. AWS Console → RDS → 인스턴스 상태 `Available` 확인
+2. RDS Configuration → Security Group inbound: ECS SG에서 5432 허용
+3. Secrets Manager → `<project>/<env>/db` → **Versions** 탭에서 SecretTargetAttachment에 의한 회전 이력 확인. 끊겼으면 RDS 콘솔에서 password 재설정 + SM 동기화.
+
+### E.6 EventBridge x-api-key 인증 실패
+
+**증상:** 스케줄 트리거가 ALB에 도달하나 백엔드가 401 또는 403 반환.
+
+**원인:** `<project>/<env>/secrets`의 `api-key` 값과 EventBridge `RuleConnection`의 `ApiKeyValue`가 불일치.
+
+**해결:**
+1. SM 콘솔에서 `api-key` 값 확인
+2. EventBridge Console → Connections → `<project>-<env>-connection` → 인증 정보 확인
+3. CloudFormation update-stack 1회 돌려 dynamic reference 갱신
+
+### E.7 Lombok 관련 컴파일 에러
+
+**증상:** IDE에서 `Cannot find symbol: method getXxx()` 같은 에러.
+
+**원인:** IntelliJ Lombok 플러그인 미설치 또는 Annotation Processing 비활성화.
+
+**해결:**
+1. IntelliJ Settings → Plugins → "Lombok" 설치 + 재시작
+2. Settings → Build → Compiler → Annotation Processors → **Enable annotation processing** 체크
+
+### E.8 Initialize Project 워크플로 실패
+
+**증상:** 레포 생성 직후 `Initialize Project` 워크플로가 ❌ 실패.
+
+**원인:** GitHub Actions의 default `GITHUB_TOKEN` 권한이 부족하여 push 안 됨 (드물게).
+
+**해결:** Settings → Actions → General → Workflow permissions → **Read and write permissions** 체크 → 워크플로 재실행.
