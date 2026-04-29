@@ -23,7 +23,7 @@
 | Build | Gradle 8.10 (wrapper) |
 | Database | PostgreSQL 16 |
 | ORM | Spring Data JPA + QueryDSL 5.0 |
-| Migration | Flyway (DB 스키마 버전 관리, 자세한 사용법은 [C.8](#c8-db-스키마-관리-flyway)) |
+| Migration | Flyway (DB 스키마 버전 관리, 자세한 사용법은 [C.9](#c9-db-스키마-관리-flyway)) |
 | API Docs | springdoc-openapi 2.5 (Swagger UI) |
 | Auth | Spring Security + JWT (jjwt 0.11) |
 | Cloud | AWS (ECS Fargate, ALB, RDS, S3, SES, Secrets Manager, EventBridge) |
@@ -370,7 +370,107 @@ com.spring.<projectName>/
     └── <Domain>ExceptionCode.java   # implements BaseErrorCode
 ```
 
-### C.3 예외 처리 패턴
+### C.3 Swagger API 문서화 패턴
+
+API 메서드에 Swagger 어노테이션을 직접 달지 않는다. 대신 **`<Domain>Api` 인터페이스**에 모든 OpenAPI 메타데이터를 모아두고, `<Domain>Controller`가 이를 `implements` 한다.
+
+#### 분리 이유
+
+- 컨트롤러 본문은 비즈니스 로직만 담아 짧게 유지
+- Swagger 어노테이션이 한곳에 모여 OpenAPI 스펙 변경 시 인터페이스만 본다
+- 인터페이스 = API 계약 = 명세 문서
+
+#### Api 인터페이스 작성
+
+```java
+@Tag(name = "[User API]")
+public interface UserApi {
+
+    @Operation(summary = "회원가입")
+    @ApiResponseExplanations(errors = {
+        @ApiExceptionExplanation(
+            name = "이메일 계정이 이미 존재함",
+            value = UserExceptionCode.class,
+            constant = "EXIST_EMAIL"),
+        @ApiExceptionExplanation(
+            name = "인증받지 않은 이메일",
+            value = UserExceptionCode.class,
+            constant = "UNVERIFIED_EMAIL")
+    })
+    ResponseEntity<ResponseDTO<RegisterUserResponseDto>> registerUser(
+        @Validated @RequestBody RegisterUserRequestDto requestDto
+    );
+}
+```
+
+핵심 어노테이션:
+- `@Tag(name = "[<도메인> API]")` — Swagger UI 그룹 이름
+- `@Operation(summary = "...")` — 메서드 한 줄 설명
+- `@ApiResponseExplanations(errors = { ... })` — 발생 가능한 비즈니스 예외 목록
+
+#### Controller 구현
+
+```java
+@RestController
+@RequestMapping("/v1/user")
+@RequiredArgsConstructor
+public class UserController implements UserApi {
+
+    private final UserService userService;
+
+    @PostMapping("/register")
+    @Override
+    public ResponseEntity<ResponseDTO<RegisterUserResponseDto>> registerUser(
+        @Validated @RequestBody RegisterUserRequestDto requestDto
+    ) {
+        return ResponseEntity.ok(
+            ResponseDTO.<RegisterUserResponseDto>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("성공")
+                .data(userService.registerUser(requestDto))
+                .build()
+        );
+    }
+}
+```
+
+규칙:
+- HTTP 매핑(`@PostMapping`, `@GetMapping`, …)과 `@RequestMapping`은 Controller에만
+- Swagger 어노테이션은 절대 Controller에 두지 않는다
+- 인터페이스의 메서드 시그니처와 Controller 구현 시그니처는 정확히 일치
+
+#### `@ApiExceptionExplanation`
+
+`com.spring.<projectName>.common.apidocs.ApiExceptionExplanation` — 비즈니스 예외(`CommonException`)를 Swagger 응답 예시로 자동 변환.
+
+```java
+@ApiExceptionExplanation(
+    name = "회원을 찾을 수 없습니다",     // Swagger UI에 표시될 예제 이름
+    value = UserExceptionCode.class,    // BaseErrorCode 구현 enum 클래스
+    constant = "NOT_FOUND_USER"         // enum 상수명 (문자열 — reflection으로 조회)
+)
+```
+
+`ApiExceptionExplainParser`(부팅 시 자동 등록)가 이를 읽어 OpenAPI `responses` 섹션에 다음 형태의 예시를 자동 채운다:
+
+```json
+{
+  "errorCode": "NOT_FOUND_USER",
+  "message": "회원을 찾을 수 없습니다"
+}
+```
+
+응답 상태 코드는 enum이 정의한 `HttpStatus`(예: `NOT_FOUND` → 404)로 그룹화된다 — 즉 같은 404로 떨어지는 여러 ErrorCode는 하나의 404 응답 블록 안에 examples로 묶여 표시된다.
+
+#### 신규 도메인 추가 시 체크리스트
+
+1. `<도메인>/exception/<Domain>ExceptionCode.java` — `BaseErrorCode` 구현 enum 정의 (코드, 메시지, `HttpStatus`)
+2. `<도메인>/controller/<Domain>Api.java` — `@Tag` + 각 메서드에 `@Operation`, `@ApiResponseExplanations`
+3. `<도메인>/controller/<Domain>Controller.java` — `implements <Domain>Api` + `@RestController`, `@RequestMapping` + HTTP 매핑
+4. Service에서 `throw new CommonException(<Domain>ExceptionCode.<상수>)` ([C.4](#c4-예외-처리-패턴))
+5. Swagger UI(`/swagger-ui/index.html`)에서 새 그룹·예외 응답 예시가 보이는지 확인
+
+### C.4 예외 처리 패턴
 
 #### CommonException + BaseErrorCode
 
@@ -414,7 +514,7 @@ throw new CommonException(UserExceptionCode.NOT_FOUND_USER);
 
 `CommonExceptionHandler` (`@RestControllerAdvice`)가 모든 `CommonException`을 잡아 enum의 `HttpStatus`로 응답 status를 설정하고, `ErrorResponseDTO(code, message)` 본문을 반환한다. 즉 enum에 `HttpStatus.NOT_FOUND`를 정의하면 자동으로 404 응답이 나간다.
 
-### C.4 응답 표준
+### C.5 응답 표준
 
 #### 성공 응답
 
@@ -446,7 +546,7 @@ return ResponseEntity.ok(response);
 
 `@Valid` 검증 실패 시 `fieldErrors`에 필드별 에러 채워짐.
 
-### C.5 보안 / JWT
+### C.6 보안 / JWT
 
 `com.spring.<projectName>.common.security.config.SecurityConfig`:
 - 인증 불요 경로: `/health`, `/swagger-ui/**`, `/v3/api-docs/**`, `/v1/auth/**`
@@ -463,7 +563,7 @@ return ResponseEntity.ok(response);
 
 OAuth2 (Google/Apple/Kakao/Naver)는 `oauth/` 패키지에서 처리. `SocialAuthRequestDto`로 클라이언트가 social provider id token을 보내면 백엔드가 검증·로컬 사용자와 매핑.
 
-### C.6 AWS 클라이언트
+### C.7 AWS 클라이언트
 
 모든 AWS SDK 클라이언트는 `DefaultCredentialsProvider`를 사용한다 (정적 키 미사용).
 
@@ -476,7 +576,7 @@ OAuth2 (Google/Apple/Kakao/Naver)는 `oauth/` 패키지에서 처리. `SocialAut
 - `common/aws/SesConfig.java` — `SesClient` 빈
 - `common/aws/SecretsManagerConfig.java` — 코드에서 직접 SM fetch 시 사용
 
-### C.7 Secrets Manager 사용 패턴
+### C.8 Secrets Manager 사용 패턴
 
 #### 패턴 1: spring.config.import (권장)
 
@@ -521,7 +621,7 @@ public class FirebaseClient {
 }
 ```
 
-### C.8 DB 스키마 관리 (Flyway)
+### C.9 DB 스키마 관리 (Flyway)
 
 DB 스키마는 **Flyway**로 버전 관리한다. JPA의 `hibernate.ddl-auto`는 모든 환경에서 `validate`로 두고, 실제 스키마 변경은 Flyway 마이그레이션 SQL로만 수행한다.
 
