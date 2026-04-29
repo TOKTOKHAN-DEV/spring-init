@@ -148,11 +148,8 @@ public class UserService {
     public PasswordResetResponse passwordReset(final PasswordResetRequest request) {
 
         //이메일로 회원 존재 여부 검증
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-            () -> new CommonException(
-                UserExceptionCode.NOT_FOUND_USER.getCode(),
-                UserExceptionCode.NOT_FOUND_USER.getMessage()
-            ));
+        User user = userRepository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new CommonException(UserExceptionCode.NOT_FOUND_USER));
 
         String token = emailTokenGenerator.generateVerificationToken(request.getEmail(), "");
 
@@ -207,29 +204,20 @@ public class UserService {
     // 유저 정보 조회
     private User getUser(Long userId) {
         return userRepository.findById(userId)
-            .orElseThrow(() -> new CommonException(
-                UserExceptionCode.NOT_FOUND_USER.getCode(),
-                UserExceptionCode.NOT_FOUND_USER.getMessage()
-            ));
+            .orElseThrow(() -> new CommonException(UserExceptionCode.NOT_FOUND_USER));
     }
 
     // 로그인한 유저 Id와 요청한 유저 Id가 일치하는지 확인
     private void validateUserId(Long id, UserDetailsImpl userDetails) {
         if (!userDetails.getUserId().equals(id)) {
-            throw new CommonException(
-                UserExceptionCode.NOT_MATCH_USER.getCode(),
-                UserExceptionCode.NOT_MATCH_USER.getMessage()
-            );
+            throw new CommonException(UserExceptionCode.NOT_MATCH_USER);
         }
     }
 
     // 비밀번호 확인란 일치 여부 검증
     private static void checkPasswordConfirm(RegisterUserRequestDto requestDto) {
         if (!requestDto.getPassword().equals(requestDto.getPasswordConfirm())) {
-            throw new CommonException(
-                UserExceptionCode.PASSWORD_MISMATCH.getCode(),
-                UserExceptionCode.PASSWORD_MISMATCH.getMessage()
-            );
+            throw new CommonException(UserExceptionCode.PASSWORD_MISMATCH);
         }
     }
 
@@ -237,10 +225,7 @@ public class UserService {
     private void checkEmailExists(RegisterUserRequestDto requestDto) {
         userRepository.findByEmail(requestDto.getEmail())
             .ifPresent(user -> {
-                throw new CommonException(
-                    UserExceptionCode.EXIST_EMAIL.getCode(),
-                    UserExceptionCode.EXIST_EMAIL.getMessage()
-                );
+                throw new CommonException(UserExceptionCode.EXIST_EMAIL);
             });
     }
 
@@ -253,25 +238,16 @@ public class UserService {
         EmailVerifier emailVerifier = emailVerifyRepository.findByEmailAndToken(
             email,
             token
-        ).orElseThrow(() -> new CommonException(
-            UserExceptionCode.UNVERIFIED_EMAIL.getCode(),
-            UserExceptionCode.UNVERIFIED_EMAIL.getMessage()
-        ));
+        ).orElseThrow(() -> new CommonException(UserExceptionCode.UNVERIFIED_EMAIL));
 
         EmailVerifier lastEmailVerifier =
             emailVerifyRepository.findFirstByEmailAndPurposeOrderByCreatedAtDesc(
                 email,
                 purpose
-            ).orElseThrow(() -> new CommonException(
-                UserExceptionCode.UNVERIFIED_EMAIL.getCode(),
-                UserExceptionCode.UNVERIFIED_EMAIL.getMessage()
-            ));
+            ).orElseThrow(() -> new CommonException(UserExceptionCode.UNVERIFIED_EMAIL));
 
         if (!emailVerifier.equals(lastEmailVerifier)) {
-            throw new CommonException(
-                EmailVerifyExceptionCode.INVALID_TOKEN.getCode(),
-                EmailVerifyExceptionCode.INVALID_TOKEN.getMessage()
-            );
+            throw new CommonException(EmailVerifyExceptionCode.INVALID_TOKEN);
         }
     }
 
@@ -285,26 +261,17 @@ public class UserService {
     ) {
         // 현재 비밀번호 확인
         if (!isResetPassword && !passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new CommonException(
-                UserExceptionCode.NOT_MATCH_CURRENT_PASSWORD.getCode(),
-                UserExceptionCode.NOT_MATCH_CURRENT_PASSWORD.getMessage()
-            );
+            throw new CommonException(UserExceptionCode.NOT_MATCH_CURRENT_PASSWORD);
         }
 
         // 새로운 비밀번호와 기존 비밀번호가 같은지 확인
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new CommonException(
-                UserExceptionCode.SAME_PASSWORD.getCode(),
-                UserExceptionCode.SAME_PASSWORD.getMessage()
-            );
+            throw new CommonException(UserExceptionCode.SAME_PASSWORD);
         }
 
         // 새로운 비밀번호 확인
         if (!newPassword.equals(newPasswordConfirm)) {
-            throw new CommonException(
-                UserExceptionCode.NOT_MATCH_CHANGE_PASSWORD.getCode(),
-                UserExceptionCode.NOT_MATCH_CHANGE_PASSWORD.getMessage()
-            );
+            throw new CommonException(UserExceptionCode.NOT_MATCH_CHANGE_PASSWORD);
         }
     }
 
