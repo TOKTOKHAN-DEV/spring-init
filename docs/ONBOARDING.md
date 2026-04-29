@@ -23,7 +23,7 @@
 | Build | Gradle 8.10 (wrapper) |
 | Database | PostgreSQL 16 |
 | ORM | Spring Data JPA + QueryDSL 5.0 |
-| Migration | Flyway (PR #2 yml에 활성, 의존성은 별도 추가 필요) |
+| Migration | Flyway (DB 스키마 버전 관리, 자세한 사용법은 [C.8](#c8-db-스키마-관리-flyway)) |
 | API Docs | springdoc-openapi 2.5 (Swagger UI) |
 | Auth | Spring Security + JWT (jjwt 0.11) |
 | Cloud | AWS (ECS Fargate, ALB, RDS, S3, SES, Secrets Manager, EventBridge) |
@@ -251,7 +251,7 @@ export AWS_PROFILE=<프로젝트명>-dev
 ```bash
 ./gradlew clean build -x test
 ```
-Expected: `BUILD SUCCESSFUL`. (테스트는 SM 접근이 필요해 -x test로 일단 제외)
+Expected: `BUILD SUCCESSFUL`.
 
 #### B.4.2 실행
 
@@ -309,7 +309,6 @@ PR 본문 권장 형식:
 
 ## Test plan
 - [ ] 빌드 성공
-- [ ] 단위 테스트 추가/통과
 - [ ] 로컬에서 시나리오 X 확인
 ```
 
@@ -404,15 +403,16 @@ public enum UserExceptionCode implements BaseErrorCode {
 
 #### 예외 던지기
 
-서비스 레이어에서:
+서비스 레이어에서 ErrorCode enum 하나만 넘긴다:
 ```java
-throw new CommonException(UserExceptionCode.NOT_FOUND_USER.getCode(),
-                          UserExceptionCode.NOT_FOUND_USER.getMessage());
+throw new CommonException(UserExceptionCode.NOT_FOUND_USER);
 ```
+
+`CommonException`은 내부에 `BaseErrorCode errorCode`를 보유하고 `super(errorCode.getMessage())`로 부모에 메시지를 넘긴다. 핸들러는 `e.getErrorCode().getHttpStatus()` / `e.getCode()` / `e.getMessage()`를 통해 enum이 정의한 응답 코드와 메시지를 그대로 사용한다.
 
 #### 전역 핸들러
 
-`CommonExceptionHandler` (`@RestControllerAdvice`)가 모든 `CommonException`을 잡아 `ErrorResponseDTO`로 변환.
+`CommonExceptionHandler` (`@RestControllerAdvice`)가 모든 `CommonException`을 잡아 enum의 `HttpStatus`로 응답 status를 설정하고, `ErrorResponseDTO(code, message)` 본문을 반환한다. 즉 enum에 `HttpStatus.NOT_FOUND`를 정의하면 자동으로 404 응답이 나간다.
 
 ### C.4 응답 표준
 
@@ -521,19 +521,56 @@ public class FirebaseClient {
 }
 ```
 
-### C.8 테스트 작성
+### C.8 DB 스키마 관리 (Flyway)
 
-- 단위 테스트: 서비스 로직, 유틸 함수 (Mock 활용)
-- Repository 테스트: `@DataJpaTest` + Testcontainers 권장 (도입 예정)
-- Controller 테스트: `MockMvc` + `@WebMvcTest`
-- 통합 테스트: `@SpringBootTest`는 SM 접근 필요, 주의해서 사용 (또는 `@MockBean`)
+DB 스키마는 **Flyway**로 버전 관리한다. JPA의 `hibernate.ddl-auto`는 모든 환경에서 `validate`로 두고, 실제 스키마 변경은 Flyway 마이그레이션 SQL로만 수행한다.
 
-테스트 실행:
-```bash
-./gradlew test
+#### 마이그레이션 파일 위치
+
+```
+src/main/resources/
+└── db/migration/
+    ├── V1__init_schema.sql
+    ├── V2__add_user_role_index.sql
+    └── V3__email_verifier_table.sql
 ```
 
-CI는 `./gradlew build -x test`로 테스트를 빌드 단계에서 제외. 로컬에서 별도 실행.
+#### 파일 네이밍 규칙
+
+- `V<번호>__<설명>.sql` (대문자 V, 숫자, **언더스코어 두 개**, 소문자+밑줄로 설명)
+- 번호는 단조 증가 정수 (`V1`, `V2`, …) 또는 timestamp (`V20260429_1530`). 팀 내 한 가지로 통일.
+- **한 번 머지된 파일은 수정 금지** — Flyway는 체크섬으로 검증한다. 잘못된 마이그레이션이면 새 V번호로 보정 마이그레이션을 추가한다.
+
+#### 신규 마이그레이션 작성 흐름
+
+1. JPA Entity 변경 (예: 새 컬럼 추가)
+2. 동일 변경을 SQL로 옮겨 `src/main/resources/db/migration/V<n>__<desc>.sql` 생성
+3. 로컬에서 부팅 → Flyway가 자동 실행해 `flyway_schema_history` 테이블에 기록
+4. JPA `validate`가 통과하면 entity ↔ 스키마 정합성 확인됨 → PR
+
+#### 환경별 동작
+
+- **local**: 빈 DB → Flyway가 V1부터 차례로 적용
+- **dev/prod**: 기존 RDS에 처음 도입할 때는 운영자가 `flyway baseline`으로 현재 스키마를 baseline으로 등록한 뒤, 이후 V<n+1>부터 자동 적용
+- 모든 환경에서 부팅 시 자동 실행 (`spring.flyway.enabled: true`)
+
+#### 설정 예 (`application-{env}.yml`)
+
+```yaml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate    # Flyway가 스키마 책임. JPA는 검증만.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true   # 기존 DB 도입 시 자동 baseline
+```
+
+#### 트러블슈팅
+
+- **체크섬 mismatch**: 누군가 머지된 V<n> 파일을 수정함. 운영자가 `flyway repair`로 history 테이블을 보정하거나, 변경 의도였다면 새 V번호로 보정 마이그레이션 추가
+- **마이그레이션 실패 후 재시도**: `flyway_schema_history`에서 실패 row를 제거 후 수정된 SQL로 재시도. prod에서는 백업 후 신중하게 진행
 
 ---
 
