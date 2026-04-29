@@ -2,14 +2,6 @@
 
 이 문서는 spring-init 템플릿으로 시작한 프로젝트의 부트스트랩, 개발자 합류, 컨벤션, 배포, 트러블슈팅을 다룬다.
 
-> ⚠️ **상태 안내**: 본 문서는 [PR #2 (`feat/secrets-manager-cicd`)](https://github.com/TOKTOKHAN-DEV/spring-init/pull/2) 가 머지된 **이후 최종 상태**를 기준으로 작성되었다. PR #2 머지 전엔 다음 항목이 현재 main과 다르다:
-> - **시크릿 구조**: 현재 main은 단일 `<project>/<env>/spring` (api-key 한 키만) + RDS의 `<project>/<env>/db`. PR #2 머지 후 `<project>/<env>/secrets` / `<project>/<env>/jwt` / `<project>/<env>/firebase` 분리.
-> - **CI/CD**: 현재 main은 `APPLICATION_DEV_YML` GitHub Secret으로 yml을 CI에서 주입. PR #2 머지 후 yml이 git에 직접 커밋되고 SM에서 시크릿 로딩.
-> - **AWS 인증**: 현재 main의 `S3Config`/`SesConfig`는 정적 키. PR #2 머지 후 `DefaultCredentialsProvider`(Task Role).
-> - **Spring 프로파일**: 현재 main에 `application-{dev,prod,local}.yml`이 git에 없음. PR #2 머지 후 추가.
->
-> 본 PR은 PR #2 머지 후에 rebase·머지하는 것을 전제로 한다. 그 전까지는 Part A.5 / D.3 / E.3-E.4 등이 현재 main과 불일치할 수 있다.
-
 ## 0. 이 문서 사용법
 
 - **새 프로젝트 시작** (테크 리드, 1회성) → [Part A. 새 프로젝트 부트스트랩](#part-a-새-프로젝트-부트스트랩-1회성)
