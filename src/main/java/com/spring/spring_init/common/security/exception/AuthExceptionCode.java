@@ -1,10 +1,11 @@
 package com.spring.spring_init.common.security.exception;
 
+import com.spring.spring_init.common.base.BaseErrorCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public enum AuthExceptionCode {
+public enum AuthExceptionCode implements BaseErrorCode {
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED_ACCESS", "인증이 필요한 접근입니다"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "접근이 거부되었습니다"),
     TOKEN_EXPIRED(HttpStatus.valueOf(444), "TOKEN_EXPIRED", "토큰이 만료되었습니다");
@@ -19,5 +20,10 @@ public enum AuthExceptionCode {
         this.httpStatusCode = httpStatusCode;
         this.code = code;
         this.message = message;
+    }
+
+    @Override
+    public HttpStatus getHttpStatus() {
+        return httpStatusCode;
     }
 }
