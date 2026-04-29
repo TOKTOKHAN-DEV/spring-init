@@ -312,3 +312,223 @@ PR 본문 권장 형식:
 ```
 
 머지 타겟: `develop` (자동 dev 배포). prod 반영은 별도 develop → main PR.
+
+---
+
+## Part C. 코드 컨벤션 & 아키텍처
+
+### C.1 패키지 구조
+
+```
+com.spring.<projectName>/
+├── SpringInitApplication.java        # 메인 클래스
+├── common/                           # 횡단 관심사
+│   ├── apidocs/                      # SwaggerConfig + ApiException 매핑
+│   ├── aws/                          # S3Config, SesConfig, SecretsManagerConfig
+│   ├── base/                         # BaseEntity, BaseErrorCode
+│   ├── dto/                          # ResponseDTO, ErrorResponseDTO, PageResponseDTO, Cursor
+│   ├── exception/                    # CommonException, CommonExceptionHandler
+│   ├── healtcheck/                   # /health 엔드포인트
+│   ├── persistence/                  # JpaConfig, QueryConfig
+│   ├── security/                     # SecurityConfig, JwtTokenFilter, TokenProvider
+│   └── utils/                        # ObjectUtils 등
+├── user/                             # 도메인 (예시)
+│   ├── controller/                   # UserApi (interface) + UserController
+│   ├── service/                      # UserService
+│   ├── repository/                   # UserRepository (인터페이스), UserJpaRepository, UserRepositoryImpl
+│   ├── entity/                       # User, UserRole
+│   ├── dto/
+│   │   ├── request/
+│   │   └── response/
+│   └── exception/                    # UserExceptionCode
+├── verify/                           # 도메인 (예시)
+└── oauth/                            # OAuth2 처리 (Google/Apple/Kakao/Naver)
+```
+
+### C.2 도메인별 폴더 패턴
+
+신규 도메인 추가 시 `user/`, `verify/` 패턴을 따른다:
+
+```
+<도메인>/
+├── controller/
+│   ├── <Domain>Api.java             # @RestController interface (Swagger 어노테이션 위치)
+│   └── <Domain>Controller.java      # implements <Domain>Api (실제 구현)
+├── service/
+│   └── <Domain>Service.java
+├── repository/
+│   ├── <Domain>Repository.java       # 도메인 레벨 추상 인터페이스
+│   ├── <Domain>JpaRepository.java   # extends JpaRepository
+│   └── <Domain>RepositoryImpl.java  # QueryDSL 동적 쿼리
+├── entity/
+│   └── <Domain>.java                # extends BaseEntity
+├── dto/
+│   ├── request/
+│   └── response/
+└── exception/
+    └── <Domain>ExceptionCode.java   # implements BaseErrorCode
+```
+
+### C.3 예외 처리 패턴
+
+#### CommonException + BaseErrorCode
+
+`com.spring.<projectName>.common.exception.CommonException`이 모든 비즈니스 예외의 기반.
+`com.spring.<projectName>.common.base.BaseErrorCode`는 모든 ErrorCode enum이 구현하는 인터페이스:
+
+```java
+public interface BaseErrorCode {
+    String getCode();
+    String getMessage();
+    HttpStatus getHttpStatus();
+}
+```
+
+#### 도메인별 ExceptionCode
+
+각 도메인은 자체 ExceptionCode enum을 정의 (예: `UserExceptionCode`, `EmailVerifyExceptionCode`):
+
+```java
+@Getter
+public enum UserExceptionCode implements BaseErrorCode {
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다");
+
+    private final HttpStatus httpStatusCode;
+    private final String code;
+    private final String message;
+    // ...
+}
+```
+
+#### 예외 던지기
+
+서비스 레이어에서:
+```java
+throw new CommonException(UserExceptionCode.USER_NOT_FOUND.getCode(),
+                          UserExceptionCode.USER_NOT_FOUND.getMessage());
+```
+
+#### 전역 핸들러
+
+`CommonExceptionHandler` (`@RestControllerAdvice`)가 모든 `CommonException`을 잡아 `ErrorResponseDTO`로 변환.
+
+### C.4 응답 표준
+
+#### 성공 응답
+
+```java
+ResponseDTO<UserInfoResponseDto> response = ResponseDTO.<UserInfoResponseDto>builder()
+    .statusCode(200)
+    .message("성공")
+    .data(userInfo)
+    .build();
+return ResponseEntity.ok(response);
+```
+
+`ResponseDTO<T>` 필드:
+- `int statusCode`
+- `String message`
+- `T data`
+
+#### 실패 응답 (자동 처리됨)
+
+`CommonException` 던지면 `CommonExceptionHandler`가 자동으로:
+
+```json
+{
+  "errorCode": "USER_NOT_FOUND",
+  "message": "사용자를 찾을 수 없습니다",
+  "fieldErrors": null
+}
+```
+
+`@Valid` 검증 실패 시 `fieldErrors`에 필드별 에러 채워짐.
+
+### C.5 보안 / JWT
+
+`com.spring.<projectName>.common.security.config.SecurityConfig`:
+- 인증 불요 경로: `/health`, `/swagger-ui/**`, `/v3/api-docs/**`, `/v1/auth/**`
+- 그 외 경로는 JWT 필수
+- `/v1/internal/**`은 x-api-key 헤더 검증 (EventBridge 같은 내부 호출용)
+- `/v1/admin/**`은 ADMIN 역할 필수
+
+`com.spring.<projectName>.common.security.jwt.TokenProvider`가 토큰 발급·검증.
+`JwtTokenFilter`가 매 요청마다 Authorization 헤더 검사.
+
+만료 시간:
+- Access Token: 7일 (yml `jwt.access-token-validity-in-milliseconds`)
+- Refresh Token: 90일
+
+OAuth2 (Google/Apple/Kakao/Naver)는 `oauth/` 패키지에서 처리. `SocialAuthRequestDto`로 클라이언트가 social provider id token을 보내면 백엔드가 검증·로컬 사용자와 매핑.
+
+### C.6 AWS 클라이언트
+
+모든 AWS SDK 클라이언트는 `DefaultCredentialsProvider`를 사용한다 (정적 키 미사용).
+
+자격증명 해석 순서:
+1. **Local**: `~/.aws/credentials`의 `AWS_PROFILE` 환경변수 프로필
+2. **ECS Fargate**: Task Role의 임시 자격증명 (자동)
+
+해당 빈 위치:
+- `common/aws/S3Config.java` — `S3Client`, `S3Presigner` 빈
+- `common/aws/SesConfig.java` — `SesClient` 빈
+- `common/aws/SecretsManagerConfig.java` — 코드에서 직접 SM fetch 시 사용
+
+### C.7 Secrets Manager 사용 패턴
+
+#### 패턴 1: spring.config.import (권장)
+
+평탄한 key-value 시크릿은 `application-{env}.yml`의 `spring.config.import`로 자동 로딩:
+
+```yaml
+spring:
+  config:
+    import:
+      - aws-secretsmanager:<project>/<env>/db
+      - aws-secretsmanager:<project>/<env>/secrets
+      - aws-secretsmanager:<project>/<env>/jwt
+```
+
+코드에서는 `@Value`로 사용:
+```java
+@Value("${jwt-secret}")
+private String jwtSecret;
+```
+
+#### 패턴 2: 코드에서 직접 fetch (중첩 JSON, 동적 로딩)
+
+Firebase Service Account 같이 중첩 구조는 `SecretsManagerConfig.getSecret()` + `ObjectMapper` 파싱:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class FirebaseClient {
+    private final SecretsManagerConfig secretsManagerConfig;
+    private final ObjectMapper objectMapper;
+
+    @Value("${app.env}")
+    private String env;
+
+    @Value("${spring.application.name}")
+    private String projectName;
+
+    public FirebaseConfig loadConfig() throws Exception {
+        String json = secretsManagerConfig.getSecret(projectName + "/" + env + "/firebase");
+        return objectMapper.readValue(json, FirebaseConfig.class);
+    }
+}
+```
+
+### C.8 테스트 작성
+
+- 단위 테스트: 서비스 로직, 유틸 함수 (Mock 활용)
+- Repository 테스트: `@DataJpaTest` + Testcontainers 권장 (도입 예정)
+- Controller 테스트: `MockMvc` + `@WebMvcTest`
+- 통합 테스트: `@SpringBootTest`는 SM 접근 필요, 주의해서 사용 (또는 `@MockBean`)
+
+테스트 실행:
+```bash
+./gradlew test
+```
+
+CI는 `./gradlew build -x test`로 테스트를 빌드 단계에서 제외. 로컬에서 별도 실행.
