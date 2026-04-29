@@ -532,3 +532,119 @@ public class FirebaseClient {
 ```
 
 CI는 `./gradlew build -x test`로 테스트를 빌드 단계에서 제외. 로컬에서 별도 실행.
+
+---
+
+## Part D. 배포 & 운영
+
+### D.1 브랜치 전략
+
+| 브랜치 | 환경 | 트리거 |
+|---|---|---|
+| `main` | prod | push 시 자동 ci/cd |
+| `develop` | dev | push 시 자동 ci/cd |
+| `feat/*`, `fix/*` 등 | (배포 없음) | PR via develop |
+
+작업 흐름:
+1. `develop`에서 `feat/<scope>` 브랜치 생성
+2. PR을 develop으로 → 리뷰 → squash 또는 merge → dev 자동 배포
+3. dev 검증 후 develop → main PR → prod 자동 배포
+
+### D.2 CI/CD 파이프라인
+
+`.github/workflows/ci_cd.yml` (트리거: push to main/develop)
+
+```
+[ continuous_integration ]
+  Set Environments (PROJECT_NAME, PROJECT_ENV)
+    ↓
+  Checkout
+    ↓
+  Set Up JDK 17
+    ↓
+  Build with Gradle (-x test)
+    ↓
+  Configure AWS credentials (GitHub Secret)
+    ↓
+  Login to Amazon ECR
+    ↓
+  Docker Buildx
+    ↓
+  Build & Push Backend Image (ECR push)
+
+[ continuous_deployment ]  ← needs: continuous_integration
+  Configure AWS credentials
+    ↓
+  Login to Amazon ECR
+    ↓
+  Download Web TaskDefinition
+    ↓
+  Render Web TaskDefinition (새 이미지로 갈아끼움)
+    ↓
+  Deploy Web Service (ECS rolling update)
+```
+
+상세 다이어그램: `.github/CICD.jpeg`
+
+`continuous_integration` job의 첫 줄:
+```yaml
+if: ${{ !contains(github.event.head_commit.message, 'initial commit') }}
+```
+이 조건 때문에 `Initialize Project` 워크플로의 `initial commit` 푸시는 CI/CD가 건너뜀.
+
+### D.3 시크릿 관리 모델
+
+| 위치 | 보유 시크릿 | 접근 주체 |
+|---|---|---|
+| **GitHub Repository Secrets** | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (CI/CD 파이프라인 전용) | GitHub Actions 러너 |
+| **AWS Secrets Manager** | DB, JWT, OAuth, Firebase, api-key | ECS Task Role (런타임), 개발자 IAM User (로컬) |
+
+원칙:
+- **GitHub Secrets는 AWS 진입권만 보유**. 다른 시크릿 절대 두지 않음.
+- **런타임 컨테이너에 정적 키 없음**. ECS Task Role의 임시 자격증명 사용.
+- **yml 파일에 시크릿 0개**. 모두 `${...}` placeholder.
+
+### D.4 시크릿 회전 절차
+
+#### JWT secret 회전
+
+영향: 발급된 모든 access/refresh 토큰 무효화 → 모든 사용자 재로그인.
+
+1. AWS Console → Secrets Manager → `<project>/<env>/jwt` → **Retrieve secret value** → **Edit**
+2. `jwt-secret` 값을 새 64자 랜덤 문자열로 교체 (`openssl rand -base64 64 | tr -d '\n='` 권장)
+3. ECS Service → **Force new deployment**
+4. 새 task가 부팅하며 새 jwt-secret으로 토큰 검증
+5. 사용자 안내: 재로그인 필요
+
+#### api-key 회전
+
+영향: EventBridge x-api-key 인증 끊김.
+
+1. SM에서 `<project>/<env>/secrets`의 `api-key` 갱신
+2. CloudFormation `RuleConnection`이 dynamic reference이므로 `aws cloudformation update-stack`을 한 번 돌려 EventBridge Connection을 새 값으로 갱신
+3. ECS Service → Force new deployment
+
+#### RDS password 회전
+
+`{project}/{env}/db` 시크릿이 RDS와 attached 상태이므로 AWS Secrets Manager **Rotation** 기능 활성화 가능 (Lambda 자동 회전). 도입 시 별도 작업.
+
+### D.5 모니터링
+
+#### CloudWatch Logs
+
+Log Group: `/ecs/<project>/<env>`
+
+각 task의 stdout/stderr가 모임. Spring 부팅 로그, 비즈니스 로그(SLF4J) 모두 여기.
+
+검색 예:
+- 부팅 성공: `Started SpringInitApplication`
+- 에러: `ERROR` 또는 `Exception`
+- SM 로딩: `Loading config data from aws-secretsmanager`
+
+#### ECS Service Events
+
+ECS Console → Cluster → Service → Events 탭. 배포 실패, 헬스체크 실패 시 여기에 사유가 남는다.
+
+#### ALB Target Group Health
+
+EC2 Console → Target Groups → `<project>-<env>-tg-8080`. Healthy/Unhealthy 카운트 + 사유.
